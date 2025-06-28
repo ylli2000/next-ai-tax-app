@@ -42,6 +42,3 @@ next-env.d.ts
 
 # cursor
 /.cursor
-
-# code snippets (reference only, not part of project)
-code-snippets/
