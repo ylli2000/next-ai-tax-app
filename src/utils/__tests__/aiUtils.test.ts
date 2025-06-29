@@ -1,5 +1,5 @@
-import type { ExtractedInvoiceData } from '@/types/aiSchema';
-import type { Invoice } from '@/types/invoiceSchema';
+import type { ExtractedInvoiceData } from '@/schema/aiSchema';
+import type { Invoice } from '@/schema/invoiceSchema';
 import { AIUtils } from '../aiUtils';
 
 describe('AIUtils', () => {

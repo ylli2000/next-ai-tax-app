@@ -4,8 +4,8 @@ import {
     type SmartCategoryResult,
     type ValidationError,
     type ValidationResult
-} from '@/types/aiSchema';
-import { type Invoice } from '@/types/invoiceSchema';
+} from '@/schema/aiSchema';
+import { type Invoice } from '@/schema/invoiceSchema';
 import { INVOICE_CATEGORIES, OPENAI_CONSTANTS } from './constants';
 
 /**
@@ -225,7 +225,7 @@ export class AIUtils {
             invoiceDate: data.invoiceDate ? new Date(data.invoiceDate) : undefined,
             dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
             status: 'COMPLETED',
-        };
+        } as Partial<Invoice>;
     }
 
     // Create OpenAI prompt for extraction

@@ -1,4 +1,4 @@
-import type { InvoiceCategory } from '../types/invoiceSchema';
+import type { InvoiceCategory } from '@/schema/invoiceSchema';
 
 // System Constants
 export const SYSTEM_CONSTANTS = {

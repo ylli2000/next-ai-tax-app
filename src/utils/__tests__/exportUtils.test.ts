@@ -1,4 +1,4 @@
-import { ExportField, ExportOptions } from '@/types/exportSchema';
+import { ExportField, ExportOptions } from '@/schema/exportSchema';
 import { ExportUtils } from '../exportUtils';
 
 describe('ExportUtils', () => {

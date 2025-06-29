@@ -28,10 +28,10 @@
 - [x] 安装和配置 Tailwind CSS ✅ *已有 v4*
 - [x] 安装和配置 Shadcn UI 组件库 ✅ *依赖已安装*
 - [x] 配置 Framer Motion 动画库 ✅ *依赖已安装*
-- [x] 设置项目目录结构 (/types, /utils, /components, /dal, /api, /actions) ✅
+- [x] 设置项目目录结构 (/schema, /utils, /components, /dal, /api, /actions) ✅
 - [x] 配置环境变量管理 (.env.local, .env.example) ✅
 
-### 🏷️ 1.2 类型定义和枚举 (/types)
+### 🏷️ 1.2 类型定义和枚举 (/schema)
 - [x] **envSchema.ts**: 环境变量类型定义 ✅ *包含完整的环境变量验证*
 - [x] **userSchema.ts**: 用户相关类型 (User, UserRole, UserProfile) ✅ *重命名为Schema*
 - [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *重命名为Schema*

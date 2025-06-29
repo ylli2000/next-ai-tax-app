@@ -1,4 +1,4 @@
-import { type User } from '@/types/userSchema';
+import { type User } from '@/schema/userSchema';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { AuthUtils } from '../authUtils';

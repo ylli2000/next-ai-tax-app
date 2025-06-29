@@ -7,7 +7,7 @@ import {
     type ExportJobStatus,
     type ExportOptions,
     type ExportTemplate
-} from '@/types/exportSchema';
+} from '@/schema/exportSchema';
 import { CURRENCY_CONSTANTS, EXPORT_FORMATS } from './constants';
 import { DateUtils } from './dateUtils';
 import { FormatUtils } from './formatUtils';
