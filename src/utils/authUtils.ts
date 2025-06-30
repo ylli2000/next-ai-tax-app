@@ -143,15 +143,6 @@ export class AuthUtils {
                 errors.push('Invalid timezone');
             }
         }
-
-        if (profileData.language && !/^[a-z]{2}(-[A-Z]{2})?$/.test(profileData.language)) {
-            errors.push('Invalid language code format');
-        }
-
-        if (profileData.theme && !['LIGHT', 'DARK', 'SYSTEM'].includes(profileData.theme)) {
-            errors.push('Invalid theme value');
-        }
-
         return {
             isValid: errors.length === 0,
             errors,
@@ -194,8 +185,6 @@ export class AuthUtils {
             userId: profile.userId,
             displayName: profile.displayName,
             timezone: profile.timezone,
-            language: profile.language,
-            theme: profile.theme,
             notificationsEnabled: profile.notificationsEnabled,
             createdAt: profile.createdAt,
             updatedAt: profile.updatedAt,
@@ -230,8 +219,6 @@ export class AuthUtils {
             userId,
             displayName: null,
             timezone: null,
-            language: 'en',
-            theme: 'SYSTEM',
             notificationsEnabled: true,
         };
     }

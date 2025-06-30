@@ -74,8 +74,8 @@ describe('AuthUtils', () => {
       expect(AuthUtils.validateUserData({ email: 'a@b.com', name: 'Ab', role: 'USER' })).toEqual({ isValid: true, errors: [] });
     });
     it('should validate user profile', () => {
-      expect(AuthUtils.validateUserProfile({ timezone: 'bad', language: 'bad', theme: 'SYSTEM' })).toEqual({ isValid: false, errors: expect.arrayContaining(['Invalid timezone', 'Invalid language code format']) });
-      expect(AuthUtils.validateUserProfile({ timezone: 'Australia/Sydney', language: 'en', theme: 'LIGHT' })).toEqual({ isValid: true, errors: [] });
+      expect(AuthUtils.validateUserProfile({ timezone: 'bad' })).toEqual({ isValid: false, errors: expect.arrayContaining(['Invalid timezone']) });
+      expect(AuthUtils.validateUserProfile({ timezone: 'Australia/Sydney'})).toEqual({ isValid: true, errors: [] });
     });
   });
 

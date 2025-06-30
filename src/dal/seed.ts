@@ -1,7 +1,7 @@
+import { categories } from '../schema/invoiceTables';
+import { userProfiles, users } from '../schema/userTables';
 import { DEFAULT_CATEGORIES_SEED, SYSTEM_CONSTANTS } from '../utils/constants';
 import { db } from './db';
-import { categories, userProfiles, users } from './schema';
-
 /**
  * Seed the database with initial data
  */
@@ -25,8 +25,6 @@ export async function seedDatabase() {
         await db.insert(userProfiles).values({
             userId: adminUser.id,
             displayName: SYSTEM_CONSTANTS.DEFAULT_ADMIN_NAME,
-            language: SYSTEM_CONSTANTS.DEFAULT_LANGUAGE,
-            theme: 'SYSTEM',
             notificationsEnabled: SYSTEM_CONSTANTS.DEFAULT_NOTIFICATIONS_ENABLED,
         });
 
