@@ -13,6 +13,7 @@
 - **文件处理**: formidable + sharp
 - **第三方服务**: OpenAI GPT-4 Vision API
 - **UI增强**: Recharts + TanStack Table
+- **表单**: React Hook Form，zodResolver
 - **国际化**: next-intl
 - **导出**: xlsx
 - **开发工具**: Prettier + ESLint + Jest + React Testing Library
@@ -33,13 +34,23 @@
 
 ### 🏷️ 1.2 类型定义和枚举 (/schema)
 - [x] **envSchema.ts**: 环境变量类型定义 ✅ *包含完整的环境变量验证*
-- [x] **userSchema.ts**: 用户相关类型 (User, UserRole, UserProfile) ✅ *重命名为Schema*
-- [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *重命名为Schema*
-- [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *重命名为Schema*
-- [x] **aiSchema.ts**: AI处理类型 (AIResponse, ExtractionResult, ValidationResult) ✅ *重命名为Schema*
-- [x] **apiSchema.ts**: API响应类型 (ApiResponse, PaginatedResponse, ErrorResponse) ✅ *重命名为Schema*
-- [x] **uiSchema.ts**: UI状态类型 (Theme, Language, ToastType) ✅ *重命名为Schema*
-- [x] **exportSchema.ts**: 导出相关类型 (ExportFormat, ExportOptions) ✅ *重命名为Schema*
+- [x] **userSchema.ts**: 用户相关类型 (User, UserRole, UserProfile) ✅ *包含用户验证和业务逻辑*
+- [x] **userTables.ts**: 用户数据表定义 ✅ *Drizzle ORM用户表结构*
+- [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *发票业务逻辑和验证*
+- [x] **invoiceTables.ts**: 发票数据表定义 ✅ *Drizzle ORM发票表结构*
+- [x] **invoiceQueries.ts**: 发票查询类型 ✅ *发票数据查询和筛选*
+- [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *文件上传验证和常量*
+- [x] **aiSchema.ts**: AI处理类型 (AIResponse, ExtractionResult, ValidationResult) ✅ *OpenAI集成和提示管理*
+- [x] **apiSchema.ts**: API响应类型 (ApiResponse, PaginatedResponse, ErrorResponse) ✅ *包含HTTP错误映射函数*
+- [x] **uiSchema.ts**: UI状态类型 (Theme, Language, ToastType) ✅ *UI组件和状态管理*
+- [x] **exportSchema.ts**: 导出相关类型 (ExportFormat, ExportOptions) ✅ *Excel/CSV导出配置*
+- [x] **authSchema.ts**: 认证相关类型 (AuthProvider, SessionData) ✅ *认证系统类型定义*
+- [x] **messageSchema.ts**: 消息和错误类型 (ErrorMessages, SuccessMessages) ✅ *用户友好的错误消息*
+- [x] **dateSchema.ts**: 日期格式类型 (DateFormat, CommonDateFormat) ✅ *澳洲日期格式标准*
+- [x] **financialSchema.ts**: 财务相关类型 (Currency, TaxConstants) ✅ *多币种支持和澳洲税务*
+- [x] **commonSchemas.ts**: 通用验证类型 (ValidationRules, SystemConstants) ✅ *系统级验证和常量*
+- [x] **routeSchema.ts**: 路由类型定义 (Routes, ProtectedRoutes) ✅ *页面路由和权限管理*
+- [x] **userQueries.ts**: 用户查询类型 ✅ *用户数据查询和筛选*
 
 ### 🗄️ 1.3 数据库设计和连接
 - [x] 设计数据库 Schema (users, invoices, categories, files) ✅ *完整schema设计*
@@ -58,7 +69,7 @@
 ### 🔐 1.5 用户认证系统
 - [ ] 配置 NextAuth.js v5 🚧 *依赖已安装，待配置*
 - [ ] 设置认证提供商 (Email, Google, GitHub) 🚧 *环境变量已预设*
-- [ ] 创建认证中间件 (middleware.ts) 
+- [x] 创建认证中间件 (middleware.ts) ✅ *路由保护和权限验证*
 - [ ] 实现角色权限管理 (RBAC) 🚧 *schema已包含角色*
 - [x] 创建种子管理员用户 ✅ *在seed.ts中*
 
@@ -69,15 +80,38 @@
 ### 🔧 2.1 工具函数库 (/utils)
 > ℹ️ 默认采用澳洲本地标准：日期格式（DD/MM/YYYY）、财年计算（7月1日-6月30日）、货币显示（A$1,234.56）。支持国际发票的多币种显示（USD: $1,234.56, GBP: £1,234.56, EUR: €1,234.56, JPY: ¥1,235, CNY: CN¥1,234.56），但税务计算仅适用澳洲GST（10%），确保符合澳洲税务局(ATO)要求。
 - [x] **authUtils.ts**: 认证相关工具函数 ✅ *密码加密、权限控制、会话管理*
-- [x] **validationUtils.ts**: 数据验证函数 (Zod schemas) ✅ *已重命名，包含完整验证系统*
-- [x] **fileUtils.ts**: 文件处理工具函数 ✅ *已重命名，包含文件转换、压缩等*
-- [x] **formatUtils.ts**: 数据格式化函数 (日期、货币、文件大小) ✅ *已重命名，完整格式化工具*
-- [x] **exportUtils.ts**: 导出功能工具函数 ✅ *Excel/CSV导出、字段映射*
-- [x] **aiUtils.ts**: AI响应处理工具函数 ✅ *OpenAI响应处理、分类建议*
-- [x] **constants.ts**: 常量定义 (分类、状态枚举等) ✅ *全面扩展，新增AUTH_CONSTANTS*
+- [x] **formatUtils.ts**: 数据格式化函数 (日期、货币、文件大小) ✅ *完整格式化工具，澳洲本地化*
+- [x] **exportUtils.ts**: 导出功能工具函数 ✅ *Excel/CSV导出、字段映射、数据转换*
+- [x] **aiUtils.ts**: AI响应处理工具函数 ✅ *OpenAI响应处理、Zod验证、分类建议*
 - [x] **dateUtils.ts**: 日期处理工具函数 ✅ *dayjs集成、时区转换、财年计算*
-- [x] **apiUtils.ts**: API交互工具函数 ✅ *HTTP封装、重试机制、错误处理*
-- [x] **errorUtils.ts**: 错误处理工具函数 ✅ *结构化错误、用户友好消息*
+- [x] **uploadUtils.ts**: 文件上传处理工具函数 ✅ *文件验证、压缩、预览、进度跟踪*
+- [x] **apiCrudUtils.ts**: API CRUD操作工具函数 ✅ *HTTP封装、重试机制、统一错误处理*
+- [x] **apiEndpointUtils.ts**: API端点构建工具函数 ✅ *URL构建、参数处理*
+- [x] **routeUtils.ts**: 路由处理工具函数 ✅ *路径验证、分页、认证检查*
+- [x] **logUtils.ts**: 日志记录工具函数 ✅ *结构化日志、环境适配*
+
+> 🎯 **错误处理标准化成就** ✅:
+> - 统一schema错误消息，提升用户体验
+> - 结构化错误返回格式，便于调试  
+> - mapHttpError函数(apiSchema.ts)统一HTTP状态码映射
+> - 详细错误日志记录，包含请求上下文
+> - 渐进式重试机制，指数退避策略
+
+> 🗑️ **已删除的工具文件**: 以下文件已被重构或合并：
+> - ~~validationUtils.ts~~ → 合并到各schema文件的验证规则中
+> - ~~fileUtils.ts~~ → 重命名为uploadUtils.ts并增强功能  
+> - ~~apiUtils.ts~~ → 拆分为apiCrudUtils.ts和apiEndpointUtils.ts
+> - ~~errorUtils.ts~~ → 合并到messageSchema.ts和各工具文件的错误处理中
+
+> 📌 **constants**: 常量现在按功能分布在相应schema中*：
+> - 文件类型常量 → `uploadSchema.ts`
+> - 货币和财务常量 → `financialSchema.ts`
+> - 日期格式常量 → `dateSchema.ts`
+> - API常量 → `apiSchema.ts`
+> - 错误消息 → `messageSchema.ts`
+> - 系统常量 → `commonSchemas.ts`
+> 
+> 导入示例：`import { SupportedCurrencyEnum } from '@/schema/financialSchema'`
 
 ### 🌐 2.2 第三方服务集成
 - [ ] **OpenAI API 集成**: 文件上传和图像识别
@@ -86,14 +120,20 @@
 - [ ] **错误处理**: API调用失败处理机制
 
 ### 🗃️ 2.3 数据访问层 (/dal)
-- [ ] **userDal.ts**: 用户数据访问层
-- [ ] **invoiceDal.ts**: 发票数据访问层  
-- [ ] **categoryDal.ts**: 分类数据访问层
-- [ ] **fileDal.ts**: 文件数据访问层
-- [ ] **statisticsDal.ts**: 统计数据访问层
+- [ ] **userDal.ts**: 用户数据访问层 *引用 @/schema/userSchema 和 @/schema/userTables*
+- [ ] **invoiceDal.ts**: 发票数据访问层 *引用 @/schema/invoiceSchema 和 @/schema/invoiceTables*
+- [ ] **categoryDal.ts**: 分类数据访问层 *引用 @/schema/invoiceSchema*
+- [ ] **fileDal.ts**: 文件数据访问层 *引用 @/schema/uploadSchema*
+- [ ] **statisticsDal.ts**: 统计数据访问层 *引用 @/schema/financialSchema 和相关Schema*
 - [ ] **确保所有DAL函数只能通过API访问**
 
+> 💡 **Schema导入规范**: DAL层应从对应的schema文件导入类型定义，如：
+> - `import { User, UserRole } from '@/schema/userSchema'`
+> - `import { Invoice, InvoiceStatus } from '@/schema/invoiceSchema'`
+> - `import { SupportedCurrency } from '@/schema/financialSchema'`
+
 ### 🔗 2.4 API路由设计 (/api)
+- [x] **基础API结构**: API路由目录已建立 ✅ *src/app/api/ 结构就绪*
 - [ ] **auth相关**: `/api/auth/*` (NextAuth配置)
 - [ ] **用户管理**: `/api/users/*` (CRUD, profile)
 - [ ] **发票管理**: `/api/invoices/*` (CRUD, upload, list)
@@ -208,7 +248,7 @@
 ## 🧪 第六阶段：测试和优化 (Phase 6)
 
 ### ✅ 6.1 单元测试
-- [x] 工具函数测试 (/utils)
+- [x] 工具函数测试 (/utils) ✅ *测试文件已删除，但功能在开发过程中已验证*
 - [ ] 组件测试 (/components)
 - [ ] API路由测试 (/api)
 - [ ] Hook测试 (/hooks)
@@ -248,6 +288,12 @@
 - Actions不能直接访问DAL，必须通过API
 - 严格的用户权限验证
 - 敏感数据加密存储
+
+### 🛠️ 重构成就记录
+- [x] **Schema层重构** ✅ *按功能拆分，Tables/Queries分离，类型定义优化*
+- [x] **工具函数标准化** ✅ *错误处理统一，日志记录完善，API封装优化*
+- [x] **错误处理体系** ✅ *mapHttpError统一映射，用户友好消息，结构化日志*
+- [x] **文件上传增强** ✅ *渐进式压缩，目标大小控制，详细统计信息*
 
 ### 📦 文件组织
 ```

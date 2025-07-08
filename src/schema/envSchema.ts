@@ -1,41 +1,50 @@
-import { z } from 'zod';
+import { z } from "zod";
+import { logError, logInfo } from "@/utils/logUtils";
 
+// Environment-specific constants
+export const ENV_CONSTANTS = {
+    IS_DEVELOPMENT: process.env.NODE_ENV === "development", // Used for dev-only features and debug logging
+    IS_PRODUCTION: process.env.NODE_ENV === "production", // Used for production optimizations and error handling
+    IS_TEST: process.env.NODE_ENV === "test", // Used in test configurations and mock data
+} as const;
+
+export const NodeEnvEnum = ["development", "testing", "production"] as const;
 const envSchema = z.object({
     // Node environment - Using 'testing' instead of Jest's default 'test'
-    NODE_ENV: z.enum(['development', 'testing', 'production']).default('development'),
+    NODE_ENV: z.enum(NodeEnvEnum).default("development"),
 
     // Auth - NextAuth.js configuration
-    AUTH_SECRET: z.string().min(1).default(''),
-    AUTH_URL: z.string().url().default(''),
-    AUTH_GOOGLE_ID: z.string().default(''),
-    AUTH_GOOGLE_SECRET: z.string().default(''),
-    AUTH_GITHUB_ID: z.string().default(''),
-    AUTH_GITHUB_SECRET: z.string().default(''),
+    AUTH_SECRET: z.string().min(1).default(""),
+    AUTH_URL: z.string().url().default(""),
+    AUTH_GOOGLE_ID: z.string().default(""),
+    AUTH_GOOGLE_SECRET: z.string().default(""),
+    AUTH_GITHUB_ID: z.string().default(""),
+    AUTH_GITHUB_SECRET: z.string().default(""),
 
     // Database
-    DATABASE_URL: z.string().min(1).default(''),
+    DATABASE_URL: z.string().min(1).default(""),
 
     // OpenAI API
-    OPENAI_API_KEY: z.string().min(1).default(''),
-    OPENAI_ORGANIZATION_ID: z.string().default(''),
+    OPENAI_API_KEY: z.string().min(1).default(""),
+    OPENAI_ORGANIZATION_ID: z.string().default(""),
 
     // Email Service (Nodemailer)
-    EMAIL_SERVER_HOST: z.string().default(''),
+    EMAIL_SERVER_HOST: z.string().default(""),
     EMAIL_SERVER_PORT: z.coerce.number().default(0),
-    EMAIL_SERVER_USER: z.string().default(''),
-    EMAIL_SERVER_PASSWORD: z.string().default(''),
-    EMAIL_FROM: z.string().email().default(''),
+    EMAIL_SERVER_USER: z.string().default(""),
+    EMAIL_SERVER_PASSWORD: z.string().default(""),
+    EMAIL_FROM: z.string().email().default(""),
 
     // App Configuration
-    NEXT_PUBLIC_APP_NAME: z.string().default('AI Invoice Manager'),
-    NEXT_PUBLIC_APP_URL: z.string().url().default(''),
+    NEXT_PUBLIC_APP_NAME: z.string().default(""),
+    NEXT_PUBLIC_APP_URL: z.string().url().default(""),
 });
 
 /**
  * @type {Record<keyof z.infer<typeof envSchema>, string | undefined>}
  */
 const processEnv = {
-    NODE_ENV: process.env.NODE_ENV || 'development',
+    NODE_ENV: process.env.NODE_ENV || "development",
 
     // NextAuth.js - Generate with: openssl rand -base64 32
     // Example: "abc123def456ghi789jkl012mno345pqr678="
@@ -95,11 +104,11 @@ const processEnv = {
 
     // App Name - Public app name for branding
     // Example: "AI Invoice Manager"
-    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'AI Tax App',
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
 
     // App URL - Public app URL for links and redirects
     // Example: "https://yourapp.vercel.app"
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || '',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 };
 
 /**
@@ -110,14 +119,20 @@ function validateEnv() {
     const result = envSchema.safeParse(processEnv);
 
     // Log environment variables for debugging in non-production environment
-    if (processEnv.NODE_ENV !== 'production') {
-        console.info('🔍 Validating environment variables...');
-        console.info('👉 processEnv:', processEnv);
+    if (processEnv.NODE_ENV !== "production") {
+        logInfo("🔍 Validating environment variables...");
+        logInfo("👉 processEnv:", processEnv);
     }
 
     if (!result.success) {
-        console.error('❌ Invalid environment variables:', result.error.flatten().fieldErrors);
-        throw new Error('Invalid environment variables:' + JSON.stringify(result.error.flatten().fieldErrors));
+        logError(
+            "❌ Invalid environment variables:",
+            result.error.flatten().fieldErrors,
+        );
+        throw new Error(
+            "Invalid environment variables:" +
+                JSON.stringify(result.error.flatten().fieldErrors),
+        );
     }
 
     return result.data;
@@ -128,4 +143,4 @@ function validateEnv() {
  */
 export const env = validateEnv();
 
-export type Env = z.infer<typeof envSchema>; 
+export type Env = z.infer<typeof envSchema>;

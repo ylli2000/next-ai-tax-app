@@ -1,9 +1,50 @@
-export type Theme = 'LIGHT' | 'DARK' | 'SYSTEM';
+import { z } from "zod";
+import { type SortOrder } from "./commonSchemas";
+// Re-export sort direction from commonSchemas
+export { SortOrder };
 
-export type Language = 'en' | 'zh';
+// UI Constants
+export const UI_CONSTANTS = {
+    DEFAULT_LANGUAGE: "en" as Language, // Used in user profile initialization and i18n setup
+    DEFAULT_THEME: "SYSTEM" as Theme, // Used in UI theme provider for system preference detection
+    DEFAULT_CURRENCY_LOCALE: "en-AU" as CurrencyLocale, // Used in Intl.NumberFormat for currency display
+    TOAST_DURATION: 5000, // Used in toast notifications for auto-dismiss timing (ms)
+    ANIMATION_DURATION: 300, // Used in UI transitions and loading animations (ms)
+    DEBOUNCE_DELAY: 300, // Used in search inputs and form validation debouncing (ms)
+    DEFAULT_CATEGORY_IS_DEFAULT: true, // Used in category creation for custom vs default categories
+    DEFAULT_NOTIFICATIONS_ENABLED: true, // Used in user preference initialization
+} as const;
+// Theme enum
+export const ThemeEnum = ["LIGHT", "DARK", "SYSTEM"] as const;
+export const themeSchema = z.enum(ThemeEnum);
+export type Theme = z.infer<typeof themeSchema>;
 
-export type ToastType = 'SUCCESS' | 'ERROR' | 'WARNING' | 'INFO';
+// Language enum
+export const LanguageEnum = ["en", "zh"] as const;
+export const languageSchema = z.enum(LanguageEnum);
+export type Language = z.infer<typeof languageSchema>;
 
+// Currency Locale enum
+export const CurrencyLocaleEnum = ["en-AU", "zh-US"] as const;
+export const currencyLocaleSchema = z.enum(CurrencyLocaleEnum);
+export type CurrencyLocale = z.infer<typeof currencyLocaleSchema>;
+
+// Toast Type enum
+export const ToastTypeEnum = ["SUCCESS", "ERROR", "WARNING", "INFO"] as const;
+export const toastTypeSchema = z.enum(ToastTypeEnum);
+export type ToastType = z.infer<typeof toastTypeSchema>;
+
+// Modal Size enum
+export const ModalSizeEnum = ["sm", "md", "lg", "xl", "full"] as const;
+export const modalSizeSchema = z.enum(ModalSizeEnum);
+export type ModalSize = z.infer<typeof modalSizeSchema>;
+
+// Dialog Variant enum
+export const DialogVariantEnum = ["default", "destructive"] as const;
+export const dialogVariantSchema = z.enum(DialogVariantEnum);
+export type DialogVariant = z.infer<typeof dialogVariantSchema>;
+
+// These are Props for the UI components, zod schema is not applicable for them
 export type Toast = {
     id: string;
     type: ToastType;
@@ -23,7 +64,7 @@ export type Modal = {
     isOpen: boolean;
     title?: string;
     content?: React.ReactNode;
-    size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+    size?: ModalSize;
     closable?: boolean;
     onClose?: () => void;
 };
@@ -48,7 +89,7 @@ export type ConfirmationDialog = {
     message: string;
     confirmLabel?: string;
     cancelLabel?: string;
-    variant?: 'default' | 'destructive';
+    variant?: DialogVariant;
     onConfirm: () => void;
     onCancel?: () => void;
 };
@@ -71,7 +112,7 @@ export type FilterState = {
 
 export type SortState = {
     field: string;
-    direction: 'asc' | 'desc';
+    direction: SortOrder;
 };
 
 export type TableState = {
@@ -106,4 +147,4 @@ export type BreadcrumbItem = {
     label: string;
     href?: string;
     isActive?: boolean;
-}; 
+};

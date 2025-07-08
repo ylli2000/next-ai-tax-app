@@ -1,8 +1,8 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-import { env } from '../schema/envSchema';
-import * as userTables from '../schema/userTables';
-import * as invoiceTables from '../schema/invoiceTables';
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { env } from "../schema/envSchema";
+import * as invoiceTables from "../schema/invoiceTables";
+import * as userTables from "../schema/userTables";
 
 // Combine all table schemas
 const schema = { ...userTables, ...invoiceTables };
@@ -14,4 +14,4 @@ const sql = neon(env.DATABASE_URL);
 export const db = drizzle(sql, { schema });
 
 // Export types
-export type Database = typeof db; 
+export type Database = typeof db;

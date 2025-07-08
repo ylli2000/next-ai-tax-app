@@ -4,7 +4,14 @@
       "Bash(mv:*)",
       "Bash(grep:*)",
       "Bash(sed:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "mcp__zen__analyze",
+      "mcp__browsermcp__browser_navigate",
+      "mcp__zen__chat",
+      "Bash(npm install:*)",
+      "WebFetch(domain:nextjs.org)",
+      "Bash(find:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

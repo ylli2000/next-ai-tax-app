@@ -1,288 +1,254 @@
-import { type User, type UserProfile, type UserRole } from '@/schema/userSchema';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
-import { AUTH_CONSTANTS, ERROR_MESSAGES } from './constants';
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { AUTH_CONSTANTS } from "@/schema/authSchema";
+import { ERROR_MESSAGES } from "@/schema/messageSchema";
+import { ROUTES } from "@/schema/routeSchema";
+import { type UserRole } from "@/schema/userSchema";
+import { type User, type UserProfile } from "@/schema/userTables";
+import { buildUrl } from "./routeUtils";
 
 /**
  * Authentication utility functions
  * Handles password hashing, JWT operations, role permissions, and session management
  */
-export class AuthUtils {
-    // Password utilities
-    static async hashPassword(password: string): Promise<string> {
-        try {
-            const saltRounds = AUTH_CONSTANTS.BCRYPT_ROUNDS;
-            return await bcrypt.hash(password, saltRounds);
-        } catch {
-            throw new Error('Failed to hash password');
-        }
+
+// Password utilities
+export const hashPassword = async (password: string): Promise<string> => {
+    try {
+        const saltRounds = AUTH_CONSTANTS.BCRYPT_ROUNDS;
+        return await bcrypt.hash(password, saltRounds);
+    } catch {
+        throw new Error(ERROR_MESSAGES.FAILED_TO_HASH_PASSWORD);
     }
-
-    static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-        try {
-            return await bcrypt.compare(password, hashedPassword);
-        } catch {
-            return false;
-        }
-    }
-
-    static generateSecureToken(length: number = 32): string {
-        return crypto.randomBytes(length).toString('hex');
-    }
-
-    static generatePasswordResetToken(): string {
-        return crypto.randomBytes(32).toString('hex');
-    }
-
-    static generateVerificationToken(): string {
-        return crypto.randomBytes(32).toString('hex');
-    }
-
-    // Role and permission utilities
-    static hasPermission(userRole: UserRole, requiredRole: UserRole): boolean {
-        const roleHierarchy: Record<UserRole, number> = {
-            USER: 0,
-            ACCOUNTANT: 1,
-            ADMIN: 2,
-        };
-
-        return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
-    }
-
-    static canAccessUser(currentUser: User, targetUserId: string): boolean {
-        // Admin can access any user
-        if (currentUser.role === 'ADMIN') return true;
-        
-        // Accountants can access their assigned users (would need additional logic for client assignments)
-        if (currentUser.role === 'ACCOUNTANT') {
-            // For now, accountants can access any user - this would be refined with client assignments
-            return true;
-        }
-        
-        // Users can only access their own data
-        return currentUser.id === targetUserId;
-    }
-
-    static canManageInvoices(userRole: UserRole): boolean {
-        return this.hasPermission(userRole, 'USER');
-    }
-
-    static canManageCategories(userRole: UserRole): boolean {
-        return this.hasPermission(userRole, 'USER');
-    }
-
-    static canViewAnalytics(userRole: UserRole): boolean {
-        return this.hasPermission(userRole, 'USER');
-    }
-
-    static canManageUsers(userRole: UserRole): boolean {
-        return this.hasPermission(userRole, 'ADMIN');
-    }
-
-    static canExportData(userRole: UserRole): boolean {
-        return this.hasPermission(userRole, 'USER');
-    }
-
-    // Session utilities
-    static generateSessionId(): string {
-        return crypto.randomUUID();
-    }
-
-    static isSessionExpired(createdAt: Date, maxAgeInMinutes: number = AUTH_CONSTANTS.SESSION_MAX_AGE): boolean {
-        const now = new Date();
-        const sessionAge = now.getTime() - createdAt.getTime();
-        const maxAge = maxAgeInMinutes * 60 * 1000; // Convert to milliseconds
-        return sessionAge > maxAge;
-    }
-
-    static getSessionTimeRemaining(createdAt: Date, maxAgeInMinutes: number = AUTH_CONSTANTS.SESSION_MAX_AGE): number {
-        const now = new Date();
-        const sessionAge = now.getTime() - createdAt.getTime();
-        const maxAge = maxAgeInMinutes * 60 * 1000;
-        return Math.max(0, maxAge - sessionAge);
-    }
-
-    // User validation utilities
-    static validateUserData(userData: Partial<User>): {
-        isValid: boolean;
-        errors: string[];
-    } {
-        const errors: string[] = [];
-
-        if (userData.email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(userData.email)) {
-                errors.push('Invalid email format');
-            }
-        }
-
-        if (userData.name && userData.name.length < 2) {
-            errors.push('Name must be at least 2 characters long');
-        }
-
-        if (userData.role && !['USER', 'ACCOUNTANT', 'ADMIN'].includes(userData.role)) {
-            errors.push('Invalid user role');
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
-    }
-
-    static validateUserProfile(profileData: Partial<UserProfile>): {
-        isValid: boolean;
-        errors: string[];
-    } {
-        const errors: string[] = [];
-
-        if (profileData.timezone) {
-            try {
-                Intl.DateTimeFormat(undefined, { timeZone: profileData.timezone });
-            } catch {
-                errors.push('Invalid timezone');
-            }
-        }
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
-    }
-
-    // Email verification utilities
-    static generateEmailVerificationLink(token: string, baseUrl: string): string {
-        return `${baseUrl}/auth/verify-email?token=${token}`;
-    }
-
-    static generatePasswordResetLink(token: string, baseUrl: string): string {
-        return `${baseUrl}/auth/reset-password?token=${token}`;
-    }
-
-    static isTokenExpired(createdAt: Date, expiryHours: number = 24): boolean {
-        const now = new Date();
-        const tokenAge = now.getTime() - createdAt.getTime();
-        const maxAge = expiryHours * 60 * 60 * 1000; // Convert to milliseconds
-        return tokenAge > maxAge;
-    }
-
-    // Security utilities
-    static sanitizeUserData(user: User): Omit<User, 'emailVerified'> & { emailVerified?: boolean } {
-        return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-            role: user.role,
-            emailVerified: !!user.emailVerified,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-        };
-    }
-
-    static sanitizeUserProfile(profile: UserProfile): UserProfile {
-        return {
-            id: profile.id,
-            userId: profile.userId,
-            displayName: profile.displayName,
-            timezone: profile.timezone,
-            notificationsEnabled: profile.notificationsEnabled,
-            createdAt: profile.createdAt,
-            updatedAt: profile.updatedAt,
-        };
-    }
-
-    // Rate limiting utilities
-    static generateRateLimitKey(identifier: string, action: string): string {
-        return `rate_limit:${action}:${identifier}`;
-    }
-
-    static calculateResetTime(windowMs: number): Date {
-        return new Date(Date.now() + windowMs);
-    }
-
-    // OAuth utilities
-    static generateOAuthState(): string {
-        return crypto.randomBytes(32).toString('base64url');
-    }
-
-    static generateCodeVerifier(): string {
-        return crypto.randomBytes(32).toString('base64url');
-    }
-
-    static generateCodeChallenge(verifier: string): string {
-        return crypto.createHash('sha256').update(verifier).digest('base64url');
-    }
-
-    // User defaults
-    static getDefaultUserProfile(userId: string): Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> {
-        return {
-            userId,
-            displayName: null,
-            timezone: null,
-            notificationsEnabled: true,
-        };
-    }
-
-    // Audit utilities
-    static createAuditLog(action: string, userId: string, details?: Record<string, unknown>) {
-        return {
-            action,
-            userId,
-            timestamp: new Date(),
-            ipAddress: null, // Would be populated from request
-            userAgent: null, // Would be populated from request
-            details: details || {},
-        };
-    }
-
-    // Error handling
-    static getAuthErrorMessage(error: string): string {
-        const errorMap: Record<string, string> = {
-            INVALID_CREDENTIALS: ERROR_MESSAGES.INVALID_CREDENTIALS,
-            EMAIL_NOT_VERIFIED: ERROR_MESSAGES.EMAIL_NOT_VERIFIED,
-            ACCOUNT_LOCKED: ERROR_MESSAGES.ACCOUNT_LOCKED,
-            WEAK_PASSWORD: ERROR_MESSAGES.WEAK_PASSWORD,
-            USER_NOT_FOUND: ERROR_MESSAGES.USER_NOT_FOUND,
-            TOKEN_EXPIRED: ERROR_MESSAGES.TOKEN_EXPIRED,
-            INVALID_TOKEN: ERROR_MESSAGES.INVALID_TOKEN,
-            PERMISSION_DENIED: ERROR_MESSAGES.PERMISSION_DENIED,
-        };
-
-        return errorMap[error] || ERROR_MESSAGES.AUTHENTICATION_FAILED;
-    }
-}
-
-// Helper functions for common auth operations
-export const authHelpers = {
-    // Quick role checks
-    isAdmin: (user: User) => user.role === 'ADMIN',
-    isAccountant: (user: User) => user.role === 'ACCOUNTANT',
-    isUser: (user: User) => user.role === 'USER',
-    
-    // Permission shortcuts
-    canManageSystem: (user: User) => AuthUtils.hasPermission(user.role, 'ADMIN'),
-    canViewAllUsers: (user: User) => AuthUtils.hasPermission(user.role, 'ACCOUNTANT'),
-    
-    // Profile helpers
-    getDisplayName: (user: User, profile?: UserProfile) => 
-        profile?.displayName || user.name || user.email.split('@')[0],
-    
-    getUserInitials: (user: User, profile?: UserProfile) => {
-        const name = profile?.displayName || user.name || user.email;
-        return name
-            .split(' ')
-            .map(word => word.charAt(0))
-            .join('')
-            .toUpperCase()
-            .slice(0, 2);
-    },
-    
-    // Status helpers
-    isEmailVerified: (user: User) => !!user.emailVerified,
-    isNewUser: (user: User) => {
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        return user.createdAt > oneDayAgo;
-    },
 };
 
-export default AuthUtils; 
+export const verifyPassword = async (
+    password: string,
+    hashedPassword: string,
+): Promise<boolean> => {
+    try {
+        return await bcrypt.compare(password, hashedPassword);
+    } catch {
+        return false;
+    }
+};
+
+export const generateSecureToken = (
+    length: number = AUTH_CONSTANTS.DEFAULT_TOKEN_LENGTH,
+): string => crypto.randomBytes(length).toString("hex");
+
+export const generatePasswordResetToken = (): string =>
+    crypto.randomBytes(AUTH_CONSTANTS.DEFAULT_TOKEN_LENGTH).toString("hex");
+
+export const generateVerificationToken = (): string =>
+    crypto.randomBytes(AUTH_CONSTANTS.DEFAULT_TOKEN_LENGTH).toString("hex");
+
+// Role and permission utilities
+export const hasPermission = (
+    userRole: UserRole,
+    requiredRole: UserRole,
+): boolean => {
+    const roleHierarchy: Record<UserRole, number> = {
+        USER: 0,
+        ACCOUNTANT: 1,
+        ADMIN: 2,
+    };
+
+    return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+};
+
+export const canAccessUser = (
+    currentUser: User,
+    targetUserId: string,
+): boolean => {
+    // Admin can access any user
+    if (currentUser.role === "ADMIN") return true;
+
+    // Accountants can access their assigned users (would need additional logic for client assignments)
+    if (currentUser.role === "ACCOUNTANT") {
+        // For now, accountants can access any user - this would be refined with client assignments
+        return true;
+    }
+
+    // Users can only access their own data
+    return currentUser.id === targetUserId;
+};
+
+export const canManageInvoices = (userRole: UserRole): boolean =>
+    hasPermission(userRole, "USER");
+
+export const canManageCategories = (userRole: UserRole): boolean =>
+    hasPermission(userRole, "USER");
+
+export const canViewAnalytics = (userRole: UserRole): boolean =>
+    hasPermission(userRole, "USER");
+
+export const canManageUsers = (userRole: UserRole): boolean =>
+    hasPermission(userRole, "ADMIN");
+
+export const canExportData = (userRole: UserRole): boolean =>
+    hasPermission(userRole, "USER");
+
+// Session utilities
+export const generateSessionId = (): string => crypto.randomUUID();
+
+export const isSessionExpired = (
+    createdAt: Date,
+    maxAgeInMinutes: number = AUTH_CONSTANTS.SESSION_MAX_AGE,
+): boolean => {
+    const now = new Date();
+    const sessionAge = now.getTime() - createdAt.getTime();
+    const maxAge = maxAgeInMinutes * AUTH_CONSTANTS.ONE_MINUTE_MS; // Convert to milliseconds
+    return sessionAge > maxAge;
+};
+
+export const getSessionTimeRemaining = (
+    createdAt: Date,
+    maxAgeInMinutes: number = AUTH_CONSTANTS.SESSION_MAX_AGE,
+): number => {
+    const now = new Date();
+    const sessionAge = now.getTime() - createdAt.getTime();
+    const maxAge = maxAgeInMinutes * AUTH_CONSTANTS.ONE_MINUTE_MS;
+    return Math.max(0, maxAge - sessionAge);
+};
+
+// Email verification utilities
+export const generateEmailVerificationLink = (
+    token: string,
+    baseUrl: string,
+): string => buildUrl(baseUrl, ROUTES.AUTH.VERIFY_EMAIL, { token });
+
+export const generatePasswordResetLink = (
+    token: string,
+    baseUrl: string,
+): string => buildUrl(baseUrl, ROUTES.AUTH.RESET_PASSWORD, { token });
+
+export const isTokenExpired = (
+    createdAt: Date,
+    expiryHours: number = 24,
+): boolean => {
+    const now = new Date();
+    const tokenAge = now.getTime() - createdAt.getTime();
+    const maxAge = expiryHours * AUTH_CONSTANTS.ONE_HOUR_MS; // Convert to milliseconds
+    return tokenAge > maxAge;
+};
+
+/**
+ * Generate unique rate limiting key for API abuse prevention
+ *
+ * Purpose: Create Redis/cache keys to track request frequency per user/IP and action type
+ * Used by: Future rate limiting middleware, authentication endpoints
+ *
+ * Usage Examples:
+ * ```typescript
+ * // Generate unique rate limit keys
+ * generateRateLimitKey('user@example.com', 'LOGIN')
+ * // Returns: "rate_limit:LOGIN:user@example.com"
+ *
+ * generateRateLimitKey('192.168.1.1', 'API_CALL')
+ * // Returns: "rate_limit:API_CALL:192.168.1.1"
+ * ```
+ *
+ * Planned Usage Scenarios:
+ * ```typescript
+ * // 1. Login rate limiting in /api/auth/signin
+ * const key = generateRateLimitKey(email, 'LOGIN');
+ * // Check if this email has exceeded 5 login attempts in 15 minutes
+ * if (await isRateLimited(key)) {
+ *     return { error: 'Too many login attempts' };
+ * }
+ *
+ * // 2. API call limiting in middleware.ts
+ * const key = generateRateLimitKey(userIP, 'API_CALL');
+ * // Check if this IP has exceeded 100 API calls in 1 minute
+ * if (await isRateLimited(key)) {
+ *     return new Response('Rate limit exceeded', { status: 429 });
+ * }
+ * ```
+ *
+ * Storage: Will be used with Redis/memory cache to store rate limit counters
+ */
+export const generateRateLimitKey = (
+    identifier: string,
+    action: string,
+): string => `${AUTH_CONSTANTS.RATE_LIMIT_KEY}:${action}:${identifier}`;
+
+/**
+ * Calculate rate limit window reset time
+ *
+ * Purpose: Determine when rate limit counters should reset/expire
+ * Used by: Rate limiting middleware, authentication endpoints
+ *
+ * Usage Example:
+ * ```typescript
+ * // Rate limit resets in 15 minutes (900000ms)
+ * const resetTime = calculateResetTime(AUTH_CONSTANTS.RATE_LIMIT_LOGIN_WINDOW);
+ * // Returns: Date object 15 minutes from now
+ *
+ * // Store in cache with expiration
+ * await redis.setex(rateLimitKey, resetTime, attemptCount);
+ * ```
+ */
+export const calculateResetTime = (windowMs: number): Date =>
+    new Date(Date.now() + windowMs);
+
+// User defaults
+export const getDefaultUserProfile = (
+    userId: string,
+): Omit<UserProfile, "id" | "createdAt" | "updatedAt"> => ({
+    userId,
+    companyName: null,
+    notificationsEnabled: true,
+});
+
+// Audit utilities
+export const createAuditLog = (
+    action: string,
+    userId: string,
+    details?: Record<string, unknown>,
+) => ({
+    action,
+    userId,
+    timestamp: new Date(),
+    ipAddress: null, // Would be populated from request
+    userAgent: null, // Would be populated from request
+    details: details || {},
+});
+
+// Auth error handling
+export const getAuthErrorMessage = (error: string): string =>
+    (ERROR_MESSAGES as Record<string, string>)[error] ||
+    ERROR_MESSAGES.AUTHENTICATION_FAILED;
+
+// Helper functions for common auth operations
+// Quick role checks
+export const isAdmin = (user: User): boolean => user.role === "ADMIN";
+export const isAccountant = (user: User): boolean => user.role === "ACCOUNTANT";
+export const isUser = (user: User): boolean => user.role === "USER";
+
+// Permission shortcuts
+export const canManageSystem = (user: User): boolean =>
+    hasPermission(user.role, "ADMIN");
+export const canViewAllUsers = (user: User): boolean =>
+    hasPermission(user.role, "ACCOUNTANT");
+
+// Profile helpers
+export const getDisplayName = (user: User): string =>
+    user.name || user.email.split("@")[0];
+
+export const getUserInitials = (user: User): string => {
+    const name = (user.name || user.email || "") as string;
+    return name
+        .split(" ")
+        .map((word: string) => word.charAt(0))
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+};
+
+// Status helpers
+export const isEmailVerified = (user: User): boolean => !!user.emailVerified;
+export const isNewUser = (user: User): boolean => {
+    const oneDayAgo = new Date(Date.now() - AUTH_CONSTANTS.ONE_DAY_MS);
+    return user.createdAt > oneDayAgo;
+};
