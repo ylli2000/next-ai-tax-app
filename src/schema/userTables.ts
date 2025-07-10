@@ -8,8 +8,8 @@ import {
     text,
     timestamp,
 } from "drizzle-orm/pg-core";
-import { SYSTEM_DEFAULT } from "./commonSchemas";
-import { UserRoleEnum } from "./userSchema";
+import { UI_CONSTANTS } from "./uiSchema";
+import { USER_CONSTANTS, UserRoleEnum } from "./userSchema";
 
 export const userRoleEnum = pgEnum("user_role", UserRoleEnum);
 
@@ -24,7 +24,7 @@ export const users = pgTable("users", {
     image: text("image"),
     role: userRoleEnum("role")
         .notNull()
-        .default(SYSTEM_DEFAULT.DEFAULT_USER_ROLE),
+        .default(USER_CONSTANTS.DEFAULT_USER_ROLE),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -89,7 +89,7 @@ export const userProfiles = pgTable("user_profiles", {
     companyName: text("company_name"),
     notificationsEnabled: boolean("notifications_enabled")
         .notNull()
-        .default(SYSTEM_DEFAULT.DEFAULT_NOTIFICATIONS_ENABLED),
+        .default(UI_CONSTANTS.DEFAULT_NOTIFICATIONS_ENABLED),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

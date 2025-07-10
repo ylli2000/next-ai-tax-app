@@ -3,7 +3,6 @@ import { VALIDATION_RULES } from "./commonSchemas";
 import { validateDateFormatSchema } from "./dateSchema";
 import { ERROR_MESSAGES } from "./messageSchema";
 import { SupportedCurrencyEnum } from "./financialSchema";
-import { validFileFormatSchema } from "./uploadSchema";
 
 /*
 Invoice Status - Tracks the overall processing lifecycle of invoices
@@ -23,9 +22,39 @@ export const InvoiceStatusEnum = [
 ] as const;
 export const invoiceStatusSchema = z.enum(InvoiceStatusEnum);
 export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
+/*
+Validation Status - Tracks quality and correctness of AI-extracted data
+  - Location: validationStatusSchema in aiSchema.ts
+  - Values: PENDING → VALID → INVALID → NEEDS_REVIEW
+  - Purpose: Track the quality status of AI validation results
+
+  Workflow relationship:
+  File upload → Invoice Status: PENDING
+             ↓
+  AI starts extraction → Invoice Status: PROCESSING
+                      ↓
+  AI extraction complete → Invoice Status: COMPLETED
+                        ↓
+  AI validates data → Validation Status: PENDING
+                   ↓
+  Validation result → Validation Status: VALID/INVALID/NEEDS_REVIEW
+
+  Summary:
+  - validationStatus = "How good is the AI-extracted data quality?"
+*/
+// Validation Status - Tracks the quality and correctness of AI-extracted data
+export const ValidationStatusEnum = [
+    "PENDING", // AI validation has not started yet
+    "VALID", // AI extracted data passed all validation checks
+    "INVALID", // AI extracted data failed validation checks
+    "NEEDS_REVIEW", // AI extracted data requires manual review due to uncertainties
+] as const;
+export const validationStatusSchema = z.enum(ValidationStatusEnum);
+export type ValidationStatus = z.infer<typeof validationStatusSchema>;
 
 // Formatting constants for formatUtils.ts
 export const INVOICE_CONSTANTS = {
+    DEFAULT_VALIDATION_STATUS: "PENDING" as ValidationStatus, // Used in AI validation workflow
     DEFAULT_INVOICE_STATUS: "PENDING" as InvoiceStatus, // Used in invoice creation and status initialization
     TRUNCATE_SUFFIX: "...", // Used in formatUtils.ts for text truncation suffix
     INVOICE_PREFIX: "INV", // Used in formatUtils.ts for invoice number formatting
@@ -173,56 +202,8 @@ export const InvoiceCategoryEnum = Object.keys(INVOICE_CATEGORIES) as [
 export const invoiceCategorySchema = z.enum(InvoiceCategoryEnum);
 export type InvoiceCategory = z.infer<typeof invoiceCategorySchema>;
 
-export const invoiceInputSchema = z.object({
-    uuid: z.string().uuid(ERROR_MESSAGES.INVALID_UUID),
-    category: z.enum(InvoiceCategoryEnum, {
-        message: ERROR_MESSAGES.INVALID_CATEGORY,
-    }),
-    phoneNumber: z
-        .string()
-        .regex(
-            VALIDATION_RULES.PHONE_NUMBER_REGEX,
-            ERROR_MESSAGES.INVALID_PHONE_NUMBER,
-        ),
-    url: z.string().url(ERROR_MESSAGES.INVALID_URL),
-    amount: z
-        .number()
-        .min(VALIDATION_RULES.MIN_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT)
-        .max(VALIDATION_RULES.MAX_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT),
-    currency: z.enum(SupportedCurrencyEnum, {
-        message: ERROR_MESSAGES.INVALID_CURRENCY,
-    }),
-    quantity: z.number().min(0).optional(),
-    supplierName: z
-        .string()
-        .min(
-            VALIDATION_RULES.MIN_LINE_ITEM_LENGTH,
-            ERROR_MESSAGES.INVALID_LINE_ITEM,
-        )
-        .max(
-            VALIDATION_RULES.MAX_LINE_ITEM_LENGTH,
-            ERROR_MESSAGES.INVALID_LINE_ITEM,
-        ),
-    //such as ABN, ACN etc.
-    supplierTaxId: z
-        .string()
-        .regex(VALIDATION_RULES.TAX_ID_REGEX, ERROR_MESSAGES.INVALID_TAX_ID),
-    supplierAddress: z
-        .string()
-        .min(
-            VALIDATION_RULES.MIN_LINE_ITEM_LENGTH,
-            ERROR_MESSAGES.INVALID_LINE_ITEM,
-        )
-        .max(
-            VALIDATION_RULES.MAX_LINE_ITEM_LENGTH,
-            ERROR_MESSAGES.INVALID_LINE_ITEM,
-        ),
-    hexColor: z
-        .string()
-        .regex(
-            VALIDATION_RULES.HEX_COLOR_REGEX,
-            ERROR_MESSAGES.INVALID_HEX_COLOR,
-        ),
+// Manual invoice creation schema (without file requirement)
+export const manualInvoiceSchema = z.object({
     invoiceNumber: z
         .string()
         .min(
@@ -236,15 +217,67 @@ export const invoiceInputSchema = z.object({
         .regex(
             VALIDATION_RULES.INVOICE_REGEX,
             ERROR_MESSAGES.INVALID_INVOICE_NUMBER,
-        ),
+        )
+        .optional(),
+    supplierName: z
+        .string()
+        .min(
+            VALIDATION_RULES.MIN_LINE_ITEM_LENGTH,
+            ERROR_MESSAGES.INVALID_LINE_ITEM,
+        )
+        .max(
+            VALIDATION_RULES.MAX_LINE_ITEM_LENGTH,
+            ERROR_MESSAGES.INVALID_LINE_ITEM,
+        )
+        .optional(),
+    supplierTaxId: z
+        .string()
+        .regex(VALIDATION_RULES.TAX_ID_REGEX, ERROR_MESSAGES.INVALID_TAX_ID)
+        .optional(),
+    supplierAddress: z
+        .string()
+        .min(
+            VALIDATION_RULES.MIN_LINE_ITEM_LENGTH,
+            ERROR_MESSAGES.INVALID_LINE_ITEM,
+        )
+        .max(
+            VALIDATION_RULES.MAX_LINE_ITEM_LENGTH,
+            ERROR_MESSAGES.INVALID_LINE_ITEM,
+        )
+        .optional(),
+    subtotal: z
+        .number()
+        .min(VALIDATION_RULES.MIN_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT)
+        .max(VALIDATION_RULES.MAX_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT)
+        .optional(),
+    taxAmount: z
+        .number()
+        .min(0, ERROR_MESSAGES.INVALID_AMOUNT)
+        .max(VALIDATION_RULES.MAX_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT)
+        .optional(),
     taxRate: z
         .number()
         .min(0, ERROR_MESSAGES.INVALID_TAX_RATE)
-        .max(100, ERROR_MESSAGES.INVALID_TAX_RATE),
-    name: z
-        .string()
-        .min(1, ERROR_MESSAGES.REQUIRED_FIELD)
-        .max(VALIDATION_RULES.MAX_NAME_LENGTH, ERROR_MESSAGES.INVALID_NAME),
+        .max(100, ERROR_MESSAGES.INVALID_TAX_RATE)
+        .optional(),
+    totalAmount: z
+        .number()
+        .min(VALIDATION_RULES.MIN_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT)
+        .max(VALIDATION_RULES.MAX_AMOUNT, ERROR_MESSAGES.INVALID_AMOUNT)
+        .optional(),
+    currency: z
+        .enum(SupportedCurrencyEnum, {
+            message: ERROR_MESSAGES.INVALID_CURRENCY,
+        })
+        .optional(),
+    invoiceDate: validateDateFormatSchema.optional(),
+    dueDate: validateDateFormatSchema.optional(),
+    category: z
+        .enum(InvoiceCategoryEnum, {
+            message: ERROR_MESSAGES.INVALID_CATEGORY,
+        })
+        .optional(),
+    customCategory: z.string().optional(),
     description: z
         .string()
         .max(
@@ -252,6 +285,20 @@ export const invoiceInputSchema = z.object({
             ERROR_MESSAGES.INVALID_DESCRIPTION,
         )
         .optional(),
-    date: validateDateFormatSchema,
-    file: validFileFormatSchema,
+    notes: z.string().optional(),
 });
+
+// Schema for updating existing invoice with AI extracted data
+export const invoiceUpdateSchema = manualInvoiceSchema.extend({
+    fileId: z.string().optional(),
+    extractedData: z.record(z.unknown()).optional(),
+    aiConfidenceScore: z.number().min(0).max(1).optional(),
+    validationStatus: z.enum(ValidationStatusEnum).optional(),
+    validationErrors: z.record(z.unknown()).optional(),
+    processedAt: z.date().optional(),
+    tags: z.array(z.string()).optional(),
+});
+
+// Type definitions
+export type ManualInvoiceInput = z.infer<typeof manualInvoiceSchema>;
+export type InvoiceUpdateInput = z.infer<typeof invoiceUpdateSchema>;

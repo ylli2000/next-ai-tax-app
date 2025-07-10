@@ -31,12 +31,13 @@
 - [x] 配置 Framer Motion 动画库 ✅ *依赖已安装*
 - [x] 设置项目目录结构 (/schema, /utils, /components, /dal, /api, /actions) ✅
 - [x] 配置环境变量管理 (.env.local, .env.example) ✅
+- [x] 修改数据库schema支持手动创建发票（file_id可空）✅
 
 ### 🏷️ 1.2 类型定义和枚举 (/schema)
 - [x] **envSchema.ts**: 环境变量类型定义 ✅ *包含完整的环境变量验证*
 - [x] **userSchema.ts**: 用户相关类型 (User, UserRole, UserProfile) ✅ *包含用户验证和业务逻辑*
 - [x] **userTables.ts**: 用户数据表定义 ✅ *Drizzle ORM用户表结构*
-- [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *发票业务逻辑和验证*
+- [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *发票业务逻辑和验证，支持手动创建和更新*
 - [x] **invoiceTables.ts**: 发票数据表定义 ✅ *Drizzle ORM发票表结构*
 - [x] **invoiceQueries.ts**: 发票查询类型 ✅ *发票数据查询和筛选*
 - [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *文件上传验证和常量*
@@ -58,6 +59,9 @@
 - [x] 配置 Vercel Postgres 连接 ✅ *通过环境变量配置*
 - [x] 创建数据库迁移文件 ✅ *drizzle-kit配置完成*
 - [x] 编写数据库种子文件 (seed users, categories) ✅ *包含管理员用户和默认分类*
+- [x] 创建数据库硬重置脚本 (Hard Reset) ✅ *包含完整的数据库重置和重建功能*
+- [x] 修复 Neon SQL 语法兼容性问题 ✅ *sql.raw() 转换为 sql.query() 方法*
+- [x] 测试数据库重置和种子功能 ✅ *npm run db:dangerously-hard-reset 测试通过*
 
 ### 📧 1.4 邮件服务配置 (Nodemailer)
 - [x] 安装 Nodemailer 依赖包 ✅ *nodemailer + @types/nodemailer*
@@ -67,11 +71,14 @@
 - [x] 集成环境变量验证 ✅ *在envSchema.ts中*
 
 ### 🔐 1.5 用户认证系统
-- [ ] 配置 NextAuth.js v5 🚧 *依赖已安装，待配置*
-- [ ] 设置认证提供商 (Email, Google, GitHub) 🚧 *环境变量已预设*
+- [x] 配置 NextAuth.js v5 ✅ *NextAuth v5.0.0-beta.29配置完成*
+- [x] 设置认证提供商 (Email, Google, GitHub) ✅ *Google/GitHub OAuth配置完成*
 - [x] 创建认证中间件 (middleware.ts) ✅ *路由保护和权限验证*
-- [ ] 实现角色权限管理 (RBAC) 🚧 *schema已包含角色*
-- [x] 创建种子管理员用户 ✅ *在seed.ts中*
+- [x] 实现角色权限管理 (RBAC) ✅ *Session/JWT类型定义完成*
+- [x] 创建种子管理员用户 ✅ *在seed.ts中，支持重复执行*
+- [x] NextAuth v5 OAuth 集成测试 ✅ *Google/GitHub 登录测试成功*
+- [x] 创建认证测试页面 ✅ *signin 和 dashboard 页面*
+- [x] 配置 Next.js 图片域名支持 ✅ *OAuth 头像显示*
 
 ---
 
@@ -136,10 +143,10 @@
 - [x] **基础API结构**: API路由目录已建立 ✅ *src/app/api/ 结构就绪*
 - [ ] **auth相关**: `/api/auth/*` (NextAuth配置)
 - [ ] **用户管理**: `/api/users/*` (CRUD, profile)
-- [ ] **发票管理**: `/api/invoices/*` (CRUD, upload, list)
+- [ ] **发票管理**: `/api/invoices/*` (CRUD, upload, list, manual create)
 - [ ] **分类管理**: `/api/categories/*` (CRUD, custom categories)
 - [ ] **文件处理**: `/api/files/*` (upload, process, preview)
-- [ ] **AI处理**: `/api/ai/*` (extract, validate, suggest)
+- [ ] **AI处理**: `/api/ai/*` (extract, validate, suggest, merge data)
 - [ ] **统计分析**: `/api/analytics/*` (statistics, reports)
 - [ ] **导出功能**: `/api/export/*` (excel, csv)
 
@@ -156,7 +163,7 @@
 
 ### 🎬 3.2 Actions (/actions)
 - [ ] **authActions.ts**: 认证相关操作
-- [ ] **invoiceActions.ts**: 发票操作 (通过API)
+- [ ] **invoiceActions.ts**: 发票操作 (通过API) - 包含手动创建、AI更新合并功能
 - [ ] **uploadActions.ts**: 文件上传操作
 - [ ] **exportActions.ts**: 导出操作
 - [ ] **确保所有Actions通过API访问，不直接访问DAL**
@@ -176,6 +183,7 @@
 - [ ] **异常检测**: 重复发票、异常金额检测
 - [ ] **智能分类**: 基于历史数据的分类建议
 - [ ] **税务抵扣识别**: AI识别可抵扣项目
+- [ ] **智能数据合并**: 手动输入数据与AI提取数据的智能合并逻辑
 
 ---
 
@@ -200,6 +208,8 @@
 - [ ] **FilterPanel**: 筛选面板
 - [ ] **ExportButton**: 导出按钮组件
 - [ ] **WelcomeMessage**: 个性化欢迎信息
+- [ ] **ManualInvoiceForm**: 手动创建发票表单组件
+- [ ] **DataMergePanel**: 数据合并界面组件
 
 ### 🌍 4.3 国际化配置
 > ℹ️ 本项目主要面向澳洲用户，默认采用澳洲本地化标准，同时支持国际发票的多币种显示和处理。
@@ -302,8 +312,8 @@
 工具函数都在 /utils 目录
 例子:
 src/
-├── app/                 # Next.js App Router页面
-├── components/          # 可重用组件
+├── app/                # Next.js App Router页面
+├── components/         # 可重用组件
 │   └── ui/             # Shadcn UI组件
 ├── utils/              # 工具函数
 ├── dal/                # 数据访问层
@@ -311,6 +321,7 @@ src/
 ├── actions/            # Server Actions
 ├── hooks/              # 自定义Hooks
 └── stores/             # Zustand状态管理
+└── lib/                # 认证和用户管理
 ```
 
 ---
@@ -319,9 +330,9 @@ src/
 
 ### ✅ Phase 1 完成标志
 - [x] 项目成功运行 ✅ *Next.js 15 + Tailwind CSS v4*
-- [ ] 数据库连接正常 🚧 *需要设置DATABASE_URL*
-- [ ] 用户认证系统可用 🚧 *NextAuth配置待完成*
-- [ ] 种子数据插入成功 🚧 *等待数据库连接*
+- [x] 数据库连接正常 ✅ *Neon PostgreSQL + Drizzle ORM*
+- [x] 用户认证系统可用 ✅ *NextAuth v5 + OAuth提供商*
+- [x] 种子数据插入成功 ✅ *管理员用户和profile创建成功*
 
 ### ✅ Phase 2 完成标志  
 - [ ] OpenAI API集成测试通过

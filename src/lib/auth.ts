@@ -16,6 +16,7 @@ import {
 } from "@/schema/userTables";
 import { getDefaultUserProfile } from "@/utils/authUtils";
 import { logError, logInfo } from "@/utils/logUtils";
+import { UserRole } from "@/schema/userSchema";
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
     adapter: DrizzleAdapter(db, {
@@ -81,7 +82,9 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
                     if (dbUser) {
                         token.role = dbUser.role;
-                        token.emailVerified = !!dbUser.emailVerified;
+                        token.emailVerified = dbUser.emailVerified
+                            ? dbUser.emailVerified
+                            : null;
                     } else {
                         // Default values for new users
                         token.role = "USER";
@@ -91,7 +94,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     logError("JWT callback database query error:", error);
                     // Fallback values
                     token.role = "USER";
-                    token.emailVerified = false;
+                    token.emailVerified = null;
                 }
             }
 
@@ -100,12 +103,15 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
         async session({ session, token }) {
             if (token && session.user) {
-                session.user.id = token.sub || token.id || "";
+                session.user.id =
+                    token.sub || (token.id as string | null | undefined) || "";
                 session.user.email = token.email || "";
                 session.user.name = token.name;
                 session.user.image = token.picture; // OAuth standard field for user avatar
-                session.user.role = token.role || "USER";
-                session.user.emailVerified = token.emailVerified || false;
+                session.user.role =
+                    (token.role as UserRole | null | undefined) || "USER";
+                session.user.emailVerified =
+                    (token.emailVerified as Date & true) || null;
             }
 
             return session;
@@ -148,12 +154,15 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             }
         },
 
-        async signOut({ session, token }) {
-            const user = {
-                userId: token?.id || session?.user?.id,
-                email: token?.email || session?.user?.email,
-            };
-            logInfo("User signed out:", user);
+        async signOut(context) {
+            if ("token" in context && context.token) {
+                const userId = context.token.id;
+                const email = context.token.email;
+                logInfo("User signed out:", { userId, email });
+            } else if ("session" in context && context.session) {
+                const userId = context.session.userId;
+                logInfo("User signed out:", { userId });
+            }
         },
     },
 });

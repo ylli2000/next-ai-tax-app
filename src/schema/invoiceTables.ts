@@ -9,10 +9,10 @@ import {
     text,
     timestamp,
 } from "drizzle-orm/pg-core";
-import { AI_CONSTANTS, ValidationStatusEnum } from "./aiSchema";
 import { FINANCIAL_CONSTANTS, PRECISION_CONSTANTS } from "./financialSchema";
 import {
     INVOICE_CONSTANTS,
+    ValidationStatusEnum,
     InvoiceCategoryEnum,
     InvoiceStatusEnum,
 } from "./invoiceSchema";
@@ -55,9 +55,9 @@ export const invoices = pgTable(
         userId: text("user_id")
             .notNull()
             .references(() => users.id, { onDelete: "cascade" }),
-        fileId: text("file_id")
-            .notNull()
-            .references(() => invoiceFiles.id, { onDelete: "cascade" }),
+        fileId: text("file_id").references(() => invoiceFiles.id, {
+            onDelete: "cascade",
+        }),
 
         // Basic invoice information
         invoiceNumber: text("invoice_number"),
@@ -105,7 +105,7 @@ export const invoices = pgTable(
         }),
         validationStatus: validationStatusEnum("validation_status")
             .notNull()
-            .default(AI_CONSTANTS.DEFAULT_VALIDATION_STATUS),
+            .default(INVOICE_CONSTANTS.DEFAULT_VALIDATION_STATUS),
         validationErrors: json("validation_errors"),
 
         // Status and metadata

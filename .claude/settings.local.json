@@ -11,7 +11,9 @@
       "Bash(npm install:*)",
       "WebFetch(domain:nextjs.org)",
       "Bash(find:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(npm run dev:*)",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }

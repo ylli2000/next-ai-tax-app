@@ -9,11 +9,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import weekday from "dayjs/plugin/weekday";
 import { AUSTRALIAN_TAX_CONSTANTS } from "@/schema/financialSchema";
-import {
-    CommonDateFormatEnum,
-    DATE_FORMATS,
-    DateRange,
-} from "@/schema/dateSchema";
+import { DateFormatEnum, DATE_FORMATS, DateRange } from "@/schema/dateSchema";
 
 // Extend dayjs with plugins
 dayjs.extend(utc);
@@ -278,7 +274,7 @@ export const getDateRange = (
  * Parse various date formats commonly found in invoices
  */
 export const parseInvoiceDate = (dateString: string): string | null => {
-    for (const format of CommonDateFormatEnum) {
+    for (const format of DateFormatEnum) {
         const parsed = dayjs(dateString, format, true);
         if (parsed.isValid()) {
             return parsed.toISOString();

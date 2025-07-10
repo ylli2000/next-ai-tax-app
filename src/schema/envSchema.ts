@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { logError, logInfo } from "@/utils/logUtils";
 
 // Environment-specific constants
 export const ENV_CONSTANTS = {
@@ -9,7 +8,7 @@ export const ENV_CONSTANTS = {
 } as const;
 
 export const NodeEnvEnum = ["development", "testing", "production"] as const;
-const envSchema = z.object({
+export const envSchema = z.object({
     // Node environment - Using 'testing' instead of Jest's default 'test'
     NODE_ENV: z.enum(NodeEnvEnum).default("development"),
 
@@ -43,7 +42,7 @@ const envSchema = z.object({
 /**
  * @type {Record<keyof z.infer<typeof envSchema>, string | undefined>}
  */
-const processEnv = {
+export const processEnv = {
     NODE_ENV: process.env.NODE_ENV || "development",
 
     // NextAuth.js - Generate with: openssl rand -base64 32
@@ -88,7 +87,7 @@ const processEnv = {
 
     // Email SMTP Port - Usually 587 for TLS or 465 for SSL
     // Example: 587
-    EMAIL_SERVER_PORT: process.env.EMAIL_SERVER_PORT || 0,
+    EMAIL_SERVER_PORT: process.env.EMAIL_SERVER_PORT,
 
     // Email SMTP - Your email address or SMTP username
     // Example: "your-email@gmail.com"
@@ -111,36 +110,11 @@ const processEnv = {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 };
 
-/**
- * Validate environment variables against the schema
- */
-function validateEnv() {
-    // Parse the environment variables
-    const result = envSchema.safeParse(processEnv);
-
-    // Log environment variables for debugging in non-production environment
-    if (processEnv.NODE_ENV !== "production") {
-        logInfo("🔍 Validating environment variables...");
-        logInfo("👉 processEnv:", processEnv);
-    }
-
-    if (!result.success) {
-        logError(
-            "❌ Invalid environment variables:",
-            result.error.flatten().fieldErrors,
-        );
-        throw new Error(
-            "Invalid environment variables:" +
-                JSON.stringify(result.error.flatten().fieldErrors),
-        );
-    }
-
-    return result.data;
-}
-
-/**
- * Validated environment variables
- */
-export const env = validateEnv();
-
 export type Env = z.infer<typeof envSchema>;
+
+export const env: Env = (() => {
+    const result = envSchema.safeParse(processEnv);
+    if (!result.success)
+        throw new Error(JSON.stringify(result.error.flatten().fieldErrors));
+    return result.data;
+})();

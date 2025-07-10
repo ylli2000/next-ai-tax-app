@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { InvoiceCategory, invoiceInputSchema } from "./invoiceSchema";
+import { InvoiceCategory } from "./invoiceSchema";
 import { ERROR_MESSAGES } from "./messageSchema";
 import { VALIDATION_RULES } from "./commonSchemas";
 import { allowedMimeTypeSchema, validFileFormatSchema } from "./uploadSchema";
@@ -13,10 +13,6 @@ import { allowedMimeTypeSchema, validFileFormatSchema } from "./uploadSchema";
 export const AIProviderEnum = ["OPENAI"] as const;
 export const aiProviderSchema = z.enum(AIProviderEnum);
 export type AIProvider = z.infer<typeof aiProviderSchema>;
-
-export const AI_CONSTANTS = {
-    DEFAULT_VALIDATION_STATUS: "PENDING" as ValidationStatus, // Used in AI validation workflow
-} as const;
 
 // OpenAI constants
 export const OPENAI_CONSTANTS = {
@@ -55,36 +51,6 @@ export type AnomalyType = z.infer<typeof anomalyTypeSchema>;
 export const AnomalySeverityEnum = ["LOW", "MEDIUM", "HIGH"] as const;
 export const anomalySeveritySchema = z.enum(AnomalySeverityEnum);
 export type AnomalySeverity = z.infer<typeof anomalySeveritySchema>;
-
-/*
-Validation Status - Tracks quality and correctness of AI-extracted data
-  - Location: validationStatusSchema in aiSchema.ts
-  - Values: PENDING → VALID → INVALID → NEEDS_REVIEW
-  - Purpose: Track the quality status of AI validation results
-
-  Workflow relationship:
-  File upload → Invoice Status: PENDING
-             ↓
-  AI starts extraction → Invoice Status: PROCESSING
-                      ↓
-  AI extraction complete → Invoice Status: COMPLETED
-                        ↓
-  AI validates data → Validation Status: PENDING
-                   ↓
-  Validation result → Validation Status: VALID/INVALID/NEEDS_REVIEW
-
-  Summary:
-  - validationStatus = "How good is the AI-extracted data quality?"
-*/
-// Validation Status - Tracks the quality and correctness of AI-extracted data
-export const ValidationStatusEnum = [
-    "PENDING", // AI validation has not started yet
-    "VALID", // AI extracted data passed all validation checks
-    "INVALID", // AI extracted data failed validation checks
-    "NEEDS_REVIEW", // AI extracted data requires manual review due to uncertainties
-] as const;
-export const validationStatusSchema = z.enum(ValidationStatusEnum);
-export type ValidationStatus = z.infer<typeof validationStatusSchema>;
 
 // Validation severity enum
 export const ValidationSeverityEnum = ["OK", "ERROR", "WARNING"] as const;
@@ -225,7 +191,7 @@ export const extractedInvoiceDataSchema = z.object({
 export type ExtractedInvoiceData = z.infer<typeof extractedInvoiceDataSchema>;
 // AI Extraction Request Schema
 export const aiExtractionRequestSchema = z.object({
-    fileId: invoiceInputSchema.shape.uuid,
+    fileId: z.string().uuid(),
     fileName: validFileFormatSchema,
     mimeType: allowedMimeTypeSchema,
     openaiFileId: z
