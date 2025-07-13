@@ -91,3 +91,46 @@ export const invoiceStatsSchema = z.object({
     ),
 });
 export type InvoiceStats = z.infer<typeof invoiceStatsSchema>;
+
+// Category statistics schemas for analytics (DAL layer)
+export const rawCategoryStatsSchema = z.object({
+    category: invoiceCategorySchema.nullable(),
+    count: z.number().int(),
+    totalAmount: z.string().nullable(), // Drizzle returns sum/avg as strings
+    averageAmount: z.string().nullable(),
+});
+export type RawCategoryStats = z.infer<typeof rawCategoryStatsSchema>;
+
+export const enrichedCategoryStatsSchema = z.object({
+    name: z.string(),
+    description: z.string(),
+    color: z.string(),
+    keywords: z.array(z.string()).readonly(),
+    count: z.number().int(),
+    totalAmount: z.number(),
+    averageAmount: z.number(),
+    percentage: z.number(),
+});
+export type EnrichedCategoryStats = z.infer<typeof enrichedCategoryStatsSchema>;
+
+export const categoryStatsDataSchema = z.object({
+    categories: z.array(enrichedCategoryStatsSchema),
+    totalCategories: z.number().int(),
+    totalInvoices: z.number().int(),
+    totalAmount: z.number(),
+});
+export type CategoryStatsData = z.infer<typeof categoryStatsDataSchema>;
+
+// DAL layer return types (pure data, no API response wrapper)
+export const invoiceWithFileSchema = z.object({
+    invoice: selectInvoiceSchema,
+    file: selectInvoiceFileSchema.nullable(),
+});
+export type InvoiceWithFile = z.infer<typeof invoiceWithFileSchema>;
+
+export const invoiceListResultSchema = z.object({
+    invoices: z.array(invoiceWithFileSchema),
+    totalCount: z.number().int(),
+    hasMore: z.boolean(),
+});
+export type InvoiceListResult = z.infer<typeof invoiceListResultSchema>;

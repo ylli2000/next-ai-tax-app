@@ -1,42 +1,27 @@
 import { count, desc, sum } from "drizzle-orm";
 import { invoices } from "@/schema/invoiceTables";
 import { type InvoiceStats } from "@/schema/invoiceQueries";
-import { ERROR_MESSAGES } from "@/schema/messageSchema";
-import { logError } from "@/utils/logUtils";
 import { db } from "../db";
 
 /**
  * Generates comprehensive invoice statistics and analytics
  * Includes total amounts, counts, category breakdown, monthly trends, and top suppliers
- * @returns Success response with detailed invoice statistics, or error response
+ * @returns Invoice statistics data
+ * @throws Error if database query fails
  */
-export const getInvoiceStats = async () => {
-    try {
-        const { totalAmount, totalCount } = await getTotalInvoiceStats();
-        const categoryBreakdown = await getCategoryBreakdown();
-        const monthlyTrend = await getMonthlyTrend();
-        const topSuppliers = await getTopSuppliers();
+export const getInvoiceStats = async (): Promise<InvoiceStats> => {
+    const { totalAmount, totalCount } = await getTotalInvoiceStats();
+    const categoryBreakdown = await getCategoryBreakdown();
+    const monthlyTrend = await getMonthlyTrend();
+    const topSuppliers = await getTopSuppliers();
 
-        const stats: InvoiceStats = {
-            totalAmount,
-            totalCount,
-            categoryBreakdown,
-            monthlyTrend,
-            topSuppliers,
-        };
-
-        return {
-            success: true,
-            data: stats,
-        };
-    } catch (error) {
-        logError("Failed to get invoice statistics", { error });
-        return {
-            success: false,
-            error: ERROR_MESSAGES.DATABASE_ERROR,
-            data: null,
-        };
-    }
+    return {
+        totalAmount,
+        totalCount,
+        categoryBreakdown,
+        monthlyTrend,
+        topSuppliers,
+    };
 };
 
 /**

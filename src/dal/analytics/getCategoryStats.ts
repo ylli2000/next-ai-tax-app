@@ -4,79 +4,38 @@ import {
     INVOICE_CATEGORIES,
     type InvoiceCategory,
 } from "@/schema/invoiceSchema";
-import { ERROR_MESSAGES } from "@/schema/messageSchema";
+import { 
+    type RawCategoryStats, 
+    type EnrichedCategoryStats, 
+    type CategoryStatsData 
+} from "@/schema/invoiceQueries";
 import { logError } from "@/utils/logUtils";
 import { db } from "../db";
 
-// Type definitions for category statistics
-type RawCategoryStats = {
-    category: InvoiceCategory | null;
-    count: number;
-    totalAmount: string | null; // Drizzle returns sum/avg as strings
-    averageAmount: string | null;
-};
-
-type EnrichedCategoryStats = {
-    name: string;
-    description: string;
-    color: string;
-    keywords: readonly string[];
-    count: number;
-    totalAmount: number; // Converted to number
-    averageAmount: number;
-    percentage: number;
-};
-
+// Internal helper type for calculating totals
 type CategoryTotals = {
     totalInvoices: number;
     totalAmount: number;
 };
 
-type CategoryStatsResponse =
-    | {
-          success: true;
-          data: {
-              categories: EnrichedCategoryStats[];
-              totalCategories: number;
-              totalInvoices: number;
-              totalAmount: number;
-          };
-      }
-    | {
-          success: false;
-          error: string;
-          data: null;
-      };
-
 /**
  * Gets comprehensive category statistics with detailed breakdown
  * Includes count, total amount, average amount, and category metadata
- * @returns Success response with detailed category statistics, or error response
+ * @returns Category statistics data
+ * @throws Error if database query fails
  */
-export const getCategoryStats = async (): Promise<CategoryStatsResponse> => {
-    try {
-        const rawCategoryStats = await getCategoryRawStats();
-        const enrichedStats = enrichCategoryData(rawCategoryStats);
-        const statsWithPercentage = calculateCategoryPercentages(enrichedStats);
-        const totals = calculateCategoryTotals(statsWithPercentage);
+export const getCategoryStats = async (): Promise<CategoryStatsData> => {
+    const rawCategoryStats = await getCategoryRawStats();
+    const enrichedStats = enrichCategoryData(rawCategoryStats);
+    const statsWithPercentage = calculateCategoryPercentages(enrichedStats);
+    const totals = calculateCategoryTotals(statsWithPercentage);
 
-        return {
-            success: true,
-            data: {
-                categories: statsWithPercentage,
-                totalCategories: statsWithPercentage.length,
-                totalInvoices: totals.totalInvoices,
-                totalAmount: totals.totalAmount,
-            },
-        };
-    } catch (error) {
-        logError("Failed to get category statistics", { error });
-        return {
-            success: false,
-            error: ERROR_MESSAGES.DATABASE_ERROR,
-            data: null,
-        };
-    }
+    return {
+        categories: statsWithPercentage,
+        totalCategories: statsWithPercentage.length,
+        totalInvoices: totals.totalInvoices,
+        totalAmount: totals.totalAmount,
+    };
 };
 
 /**

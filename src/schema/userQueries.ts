@@ -99,3 +99,23 @@ export const userStatsSchema = z.object({
     }),
 });
 export type UserStats = z.infer<typeof userStatsSchema>;
+
+// DAL layer return types (pure data, no API response wrapper)
+export const userWithProfileSchema = z.object({
+    user: selectUserSchema,
+    profile: selectUserProfileSchema.nullable(),
+});
+export type UserWithProfile = z.infer<typeof userWithProfileSchema>;
+
+export const createUserResultSchema = z.object({
+    user: selectUserSchema,
+    profile: selectUserProfileSchema,
+});
+export type CreateUserResult = z.infer<typeof createUserResultSchema>;
+
+export const userListResultSchema = z.object({
+    users: z.array(userWithProfileSchema),
+    totalCount: z.number().int(),
+    hasMore: z.boolean(),
+});
+export type UserListResult = z.infer<typeof userListResultSchema>;
