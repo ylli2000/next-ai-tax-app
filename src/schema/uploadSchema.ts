@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { SYSTEM_DEFAULT } from "./commonSchemas";
 import { ERROR_MESSAGES } from "./messageSchema";
 
 /**
@@ -56,9 +55,10 @@ export type AllowedExtension = z.infer<typeof allowedExtensionSchema>;
 // File upload progress status
 export const UploadStatusEnum = [
     "NOT_UPLOADED",
-    "UPLOADING",
-    "PROCESSING",
-    "COMPLETED",
+    "UPLOADING_STAGE_1", // 正在上传至S3
+    "UPLOADING_STAGE_2", // 正在上传至OpenAI (临时)
+    "PROCESSING", // 正在等待OpenAI处理返回
+    "COMPLETED", // 处理完成，OpenAI文件已清理
     "FAILED",
 ] as const;
 export const uploadStatusSchema = z.enum(UploadStatusEnum);
@@ -75,6 +75,34 @@ export const UploadErrorCodeEnum = [
 export const uploadErrorCodeSchema = z.enum(UploadErrorCodeEnum);
 export type UploadErrorCode = z.infer<typeof uploadErrorCodeSchema>;
 
+// Upload status display constants for UI
+export const UPLOAD_STATUS_MESSAGES: Record<UploadStatus, string> = {
+    NOT_UPLOADED: "Ready to upload",
+    UPLOADING_STAGE_1: "Uploading to storage...",
+    UPLOADING_STAGE_2: "Uploading for processing...",
+    PROCESSING: "Processing with AI...",
+    COMPLETED: "Upload completed",
+    FAILED: "Upload failed",
+} as const;
+
+export const UPLOAD_STATUS_COLORS: Record<UploadStatus, string> = {
+    NOT_UPLOADED: "gray",
+    UPLOADING_STAGE_1: "blue",
+    UPLOADING_STAGE_2: "blue",
+    PROCESSING: "orange",
+    COMPLETED: "green",
+    FAILED: "red",
+} as const;
+
+export const UPLOAD_STATUS_ICONS: Record<UploadStatus, string> = {
+    NOT_UPLOADED: "upload",
+    UPLOADING_STAGE_1: "loading",
+    UPLOADING_STAGE_2: "loading",
+    PROCESSING: "cog",
+    COMPLETED: "check",
+    FAILED: "x",
+} as const;
+
 // File Size Constants
 export const FILE_SIZE_CONSTANTS = {
     MAX_FILENAME_LENGTH: 255, // Used in fileUtils.ts for filename length validation
@@ -85,7 +113,7 @@ export const FILE_SIZE_CONSTANTS = {
 
 // File Upload Constants - referencing schema enums for consistency
 export const UPLOAD_CONSTANTS = {
-    DEFAULT_UPLOAD_STATUS: "NOT_UPLOADED", // as UploadStatus, // Used in file storage status initialization
+    DEFAULT_UPLOAD_STATUS: "NOT_UPLOADED" as UploadStatus, // Used in UI initialization
 
     // File type arrays for validation
     IMAGE_EXTENSIONS: ImageExtensionEnum, // Used in uploadUtils.ts for image file validation
@@ -113,6 +141,26 @@ export const UPLOAD_CONSTANTS = {
     },
     // Filename safety for uploadUtils.ts
     UNSAFE_FILENAME_CHARS: /[<>:"/\\|?*]/g, // Used in uploadUtils.ts for filename sanitization
+
+    // Bulk upload constants
+    AVERAGE_UPLOAD_SPEED_BYTES_PER_SECOND: 1024 * 100, // 100KB/s estimated upload speed for time calculation
+    DEFAULT_BATCH_SIZE: 3, // Maximum files to process simultaneously in batch upload
+    MAX_CONCURRENT_UPLOADS: 2, // Maximum concurrent upload operations
+
+    // Default fallback values for UI display
+    DEFAULT_STATUS_MESSAGE: UPLOAD_STATUS_MESSAGES.NOT_UPLOADED, // Fallback to NOT_UPLOADED status message
+    DEFAULT_STATUS_COLOR: UPLOAD_STATUS_COLORS.NOT_UPLOADED, // Default color for unknown status
+    DEFAULT_STATUS_ICON: UPLOAD_STATUS_ICONS.NOT_UPLOADED, // Default icon for unknown status
+} as const;
+
+// Upload status transitions matrix for validation
+export const VALID_STATUS_TRANSITIONS: Record<UploadStatus, UploadStatus[]> = {
+    NOT_UPLOADED: ["UPLOADING_STAGE_1", "FAILED"],
+    UPLOADING_STAGE_1: ["UPLOADING_STAGE_2", "FAILED"],
+    UPLOADING_STAGE_2: ["PROCESSING", "FAILED"],
+    PROCESSING: ["COMPLETED", "FAILED"],
+    COMPLETED: [], // Terminal state
+    FAILED: ["NOT_UPLOADED"], // Can retry
 } as const;
 
 // Upload configuration schema
@@ -171,7 +219,7 @@ export const uploadResultSchema = z.object({
     fileName: z.string().min(1),
     fileSize: z.number().min(0),
     mimeType: z.string(),
-    openaiFileId: z.string().optional(),
+    s3ObjectKey: z.string().min(1),
 });
 export type UploadResult = z.infer<typeof uploadResultSchema>;
 

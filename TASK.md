@@ -11,6 +11,7 @@
 - **认证**: NextAuth.js v5
 - **邮件服务**: Nodemailer (邮件验证、通知)
 - **文件处理**: formidable + sharp
+- **云存储**: AWS S3 (Sydney region) + OpenAI Files API (临时)
 - **第三方服务**: OpenAI GPT-4 Vision API
 - **UI增强**: Recharts + TanStack Table
 - **表单**: React Hook Form，zodResolver
@@ -34,13 +35,13 @@
 - [x] 修改数据库schema支持手动创建发票（file_id可空）✅
 
 ### 🏷️ 1.2 类型定义和枚举 (/schema)
-- [x] **envSchema.ts**: 环境变量类型定义 ✅ *包含完整的环境变量验证*
+- [x] **envSchema.ts**: 环境变量类型定义 ✅ *完整验证+AWS S3存储配置*
 - [x] **userSchema.ts**: 用户相关类型 (User, UserRole, UserProfile) ✅ *包含用户验证和业务逻辑*
 - [x] **userTables.ts**: 用户数据表定义 ✅ *Drizzle ORM用户表结构*
 - [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *发票业务逻辑和验证，支持手动创建和更新*
-- [x] **invoiceTables.ts**: 发票数据表定义 ✅ *Drizzle ORM发票表结构*
+- [x] **invoiceTables.ts**: 发票数据表定义 ✅ *双存储架构：S3永久存储+简化数据库模型*
 - [x] **invoiceQueries.ts**: 发票查询类型 ✅ *发票数据查询和筛选*
-- [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *文件上传验证和常量*
+- [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *分阶段上传状态、S3存储配置*
 - [x] **aiSchema.ts**: AI处理类型 (AIResponse, ExtractionResult, ValidationResult) ✅ *OpenAI集成和提示管理*
 - [x] **apiSchema.ts**: API响应类型 (ApiResponse, PaginatedResponse, ErrorResponse) ✅ *包含HTTP错误映射函数*
 - [x] **uiSchema.ts**: UI状态类型 (Theme, Language, ToastType) ✅ *UI组件和状态管理*
@@ -91,7 +92,8 @@
 - [x] **exportUtils.ts**: 导出功能工具函数 ✅ *Excel/CSV导出、字段映射、数据转换*
 - [x] **aiUtils.ts**: AI响应处理工具函数 ✅ *OpenAI响应处理、Zod验证、分类建议*
 - [x] **dateUtils.ts**: 日期处理工具函数 ✅ *dayjs集成、时区转换、财年计算*
-- [x] **uploadUtils.ts**: 文件上传处理工具函数 ✅ *文件验证、压缩、预览、进度跟踪*
+- [x] **uploadUtils.ts**: 文件上传处理工具函数 ✅ *双存储架构、分阶段上传、OpenAI临时文件管理*
+- [x] **awsUtils.ts**: AWS S3存储工具函数 ✅ *S3上传/下载、文件生命周期管理、7年归档*
 - [x] **apiCrudUtils.ts**: API CRUD操作工具函数 ✅ *HTTP封装、重试机制、统一错误处理*
 - [x] **apiEndpointUtils.ts**: API端点构建工具函数 ✅ *URL构建、参数处理*
 - [x] **routeUtils.ts**: 路由处理工具函数 ✅ *路径验证、分页、认证检查*
@@ -121,9 +123,9 @@
 > 导入示例：`import { SupportedCurrencyEnum } from '@/schema/financialSchema'`
 
 ### 🌐 2.2 第三方服务集成
-- [ ] **OpenAI API 集成**: 文件上传和图像识别
+- [ ] **双存储架构集成**: S3永久存储 + OpenAI临时处理
 - [ ] **文件上传服务**: formidable + sharp 图片优化
-- [ ] **测试 OpenAI Vision API**: 发票信息提取测试
+- [ ] **测试双存储工作流**: 上传→处理→清理完整流程
 - [ ] **错误处理**: API调用失败处理机制
 
 ### 🗃️ 2.3 数据访问层 (/dal)

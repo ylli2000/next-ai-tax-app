@@ -6,6 +6,7 @@ import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
+import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -67,7 +68,8 @@ const eslintConfig = tseslint.config(
             '@next/next': pluginNext,
             '@typescript-eslint': typescript,
             prettier: prettierPlugin,
-            import: importPlugin
+            import: importPlugin,
+            'unused-imports': unusedImportsPlugin
         },
         settings: {
             //the Import plugin Typescript resolver 
@@ -86,7 +88,18 @@ const eslintConfig = tseslint.config(
             // TypeScript specific rules
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-unused-vars': ['off', { argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-unused-vars': 'off', // 关闭原规则，使用unused-imports插件
+            'no-unused-vars': 'off',
+            
+            // Unused imports plugin rules (with auto-fix support)
+            'unused-imports/no-unused-imports': 'error',
+            'unused-imports/no-unused-vars': ['warn', {
+                vars: 'all',
+                varsIgnorePattern: '^_',
+                args: 'after-used',
+                argsIgnorePattern: '^_',
+                ignoreRestSiblings: true
+            }],
 
             // Prettier integration
             'prettier/prettier': ['warn', {tabWidth: 4, useTabs: false}],

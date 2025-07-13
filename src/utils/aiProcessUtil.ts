@@ -15,12 +15,59 @@ import {
     ERROR_MESSAGES,
     AIValidationErrorCode,
 } from "@/schema/messageSchema";
+import { UploadStatus } from "@/schema/uploadSchema";
+import { logInfo, logError } from "./logUtils";
 
 /**
- * AI utility functions for invoice processing
- * Handles OpenAI API responses, data validation, and category suggestions
+ * AI data processing utilities
+ * Handles OpenAI API requests, responses, data validation, and category suggestions
  */
-// Process OpenAI extraction response with enhanced category data
+
+// ===== Processing and Cleanup =====
+
+/**
+ * TODO: Implement actual OpenAI processing logic
+ * Process file with OpenAI for invoice data extraction
+ * This is a placeholder for the actual AI processing logic
+ */
+export const processWithOpenAI = async (
+    openaiFileId: string,
+    onProgressUpdate?: (status: UploadStatus, progress: number) => void,
+): Promise<any> => {
+    try {
+        onProgressUpdate?.("PROCESSING", 20);
+
+        // TODO: Implement actual OpenAI processing logic
+        // This would call the OpenAI API to analyze the invoice
+        // and extract structured data
+        // Example: const response = await _openai.chat.completions.create({...});
+
+        logInfo("Processing file with OpenAI", { openaiFileId });
+
+        // Simulate processing time
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        onProgressUpdate?.("PROCESSING", 80);
+
+        // Placeholder return - replace with actual implementation
+        const extractedData = {
+            invoiceNumber: "INV-001",
+            supplierName: "Example Supplier",
+            totalAmount: 100.0,
+            // ... other extracted fields
+        };
+
+        return extractedData;
+    } catch (error) {
+        logError("Failed to process file with OpenAI", { error, openaiFileId });
+        throw error;
+    }
+};
+
+// ===== Response Processing =====
+
+/**
+ * Process OpenAI extraction response with enhanced category data
+ */
 export const processExtractionResponse = (
     response: unknown,
     confidence: number = AI_VALIDATION_CONSTANTS.DEFAULT_CONFIDENCE,
@@ -62,14 +109,18 @@ export const processExtractionResponse = (
         };
     }
 };
-// Note: Extraction helpers removed - now using Zod schema validation based on OpenAI API contract
 
-// Validate extracted invoice data
+// ===== Data Validation =====
+
+/**
+ * Validate extracted invoice data
+ */
 export const validateExtractionData = (
     data: ExtractedInvoiceData,
 ): ValidationResult => {
     const errors: ValidationError[] = [];
     const warnings: ValidationError[] = [];
+
     // Missing total amount error
     if (!data.totalAmount) {
         errors.push({
@@ -79,6 +130,7 @@ export const validateExtractionData = (
             severity: AI_VALIDATION_CONSTANTS.ERROR_SEVERITY,
         });
     }
+
     // Missing supplier name warning
     if (!data.supplierName) {
         warnings.push({
@@ -88,6 +140,7 @@ export const validateExtractionData = (
             severity: AI_VALIDATION_CONSTANTS.WARNING_SEVERITY,
         });
     }
+
     // Subtotal + tax amount != total amount warning
     if (data.subtotal && data.taxAmount && data.totalAmount) {
         const calculatedTotal = data.subtotal + data.taxAmount;
@@ -101,6 +154,7 @@ export const validateExtractionData = (
             });
         }
     }
+
     return {
         isValid: errors.length === 0,
         errors,
@@ -109,7 +163,11 @@ export const validateExtractionData = (
     };
 };
 
-// Main category suggestion function with AI-first approach and historical fallback
+// ===== Category Suggestions =====
+
+/**
+ * Main category suggestion function with AI-first approach and historical fallback
+ */
 export const suggestCategory = (
     data: ExtractedInvoiceData,
     historicalInvoices: Invoice[] = [],
@@ -162,7 +220,9 @@ export const suggestCategory = (
     };
 };
 
-// Get AI category suggestion from extracted data
+/**
+ * Get AI category suggestion from extracted data
+ */
 export const suggestCategoryFromAI = (
     data: ExtractedInvoiceData,
 ): SmartCategoryResult | null => {
@@ -189,7 +249,9 @@ export const suggestCategoryFromAI = (
     return null;
 };
 
-// Get category suggestion from historical invoices for the same supplier
+/**
+ * Get category suggestion from historical invoices for the same supplier
+ */
 export const suggestCategoryFromHistory = (
     data: ExtractedInvoiceData,
     historicalInvoices: Invoice[],
@@ -225,7 +287,10 @@ export const suggestCategoryFromHistory = (
         alternativeCategories: [],
     };
 };
-// Generate reasoning for category suggestion
+
+/**
+ * Generate reasoning for category suggestion
+ */
 export const generateCategoryReasoning = (
     category: string,
     supplierName: string,
@@ -240,7 +305,9 @@ export const generateCategoryReasoning = (
           ).replace("{supplierName}", supplierName)
         : AI_MESSAGES.DEFAULT_REASONING.replace("{baseName}", baseName);
 };
-// Helper functions for AI operations
+
+// ===== Helper Functions =====
+
 // Response helpers
 export const isSuccessfulExtraction = (response: AIExtractionResponse) =>
     response.success && !!response.data;

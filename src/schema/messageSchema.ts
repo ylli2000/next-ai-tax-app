@@ -30,6 +30,7 @@ export type AIValidationErrorCode = z.infer<typeof AIValidationErrorCodeSchema>;
 
 // Success messages
 export const SUCCESS_MESSAGES = {
+    EMAIL_SENT: "Email sent successfully!",
     INVOICE_UPLOADED: "Invoice uploaded and processed successfully!",
     INVOICE_UPDATED: "Invoice updated successfully!",
     INVOICE_DELETED: "Invoice deleted successfully!",
@@ -37,7 +38,10 @@ export const SUCCESS_MESSAGES = {
     CATEGORY_UPDATED: "Category updated successfully!",
     CATEGORY_DELETED: "Category deleted successfully!",
     EXPORT_COMPLETED: "Export completed successfully!",
-    EMAIL_SENT: "Email sent successfully!",
+    USER_CREATED_SUCCESSFULLY: "User created successfully!",
+    USER_UPDATED_SUCCESSFULLY: "User updated successfully!",
+    USER_DELETED_SUCCESSFULLY: "User deleted successfully!",
+    USER_PROFILE_UPDATED_SUCCESSFULLY: "User profile updated successfully!",
 } as const;
 
 export const SuccessMessageKeysEnum = Object.keys(SUCCESS_MESSAGES) as [
@@ -71,6 +75,14 @@ export const ERROR_MESSAGES = {
         "Something went wrong while saving your data. Please try again",
     RECORD_NOT_FOUND: "The item you're looking for could not be found",
     DUPLICATE_RECORD: "This item already exists in your records",
+
+    // User errors
+    USER_CREATION_FAILED: "User creation failed",
+    USER_UPDATE_FAILED: "User update failed",
+    USER_DELETION_FAILED: "User deletion failed",
+    USER_ALREADY_EXISTS: "User already exists",
+    USER_PROFILE_NOT_FOUND: "User profile not found",
+    USER_PROFILE_UPDATE_FAILED: "User profile update failed",
 
     // Authentication errors
     UNAUTHORIZED: "You don't have permission to do this action",
@@ -145,6 +157,15 @@ export const ERROR_MESSAGES = {
     FAILED_TO_COMPRESS_IMAGE: "Failed to compress image",
     FAILED_TO_LOAD_IMAGE: "Failed to load image",
 
+    // AWS S3 Storage errors
+    AWS_CONFIGURATION_ERROR:
+        "Cloud storage configuration error. Please contact support",
+    S3_UPLOAD_FAILED:
+        "Failed to upload file to cloud storage. Please try again",
+    S3_DOWNLOAD_FAILED: "Failed to download file from cloud storage",
+    S3_DELETE_FAILED: "Failed to delete file from cloud storage",
+    S3_METADATA_FAILED: "Failed to get file information from cloud storage",
+
     // Export errors
     EXPORT_FAILED: "Export failed. Please try again",
     ERROR_READING_FILES: "Error reading files",
@@ -165,3 +186,10 @@ export const ErrorMessageKeysEnum = Object.keys(ERROR_MESSAGES) as [
 ];
 export const ErrorMessageKeysSchema = z.enum(ErrorMessageKeysEnum);
 export type ErrorMessageKey = z.infer<typeof ErrorMessageKeysSchema>;
+//get the array of values from ERROR_MESSAGES
+export const ErrorMessageValues = Object.values(ERROR_MESSAGES) as [
+    (typeof ERROR_MESSAGES)[keyof typeof ERROR_MESSAGES],
+    ...(typeof ERROR_MESSAGES)[keyof typeof ERROR_MESSAGES][],
+];
+export const ErrorMessageValuesSchema = z.enum(ErrorMessageValues);
+export type ErrorMessageValue = z.infer<typeof ErrorMessageValuesSchema>;

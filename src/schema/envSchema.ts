@@ -27,6 +27,12 @@ export const envSchema = z.object({
     OPENAI_API_KEY: z.string().min(1).default(""),
     OPENAI_ORGANIZATION_ID: z.string().default(""),
 
+    // AWS S3 Storage
+    AWS_ACCESS_KEY_ID: z.string().min(1).default(""),
+    AWS_SECRET_ACCESS_KEY: z.string().min(1).default(""),
+    AWS_REGION: z.string().default(""),
+    AWS_S3_BUCKET: z.string().min(1).default(""),
+
     // Email Service (Nodemailer)
     EMAIL_SERVER_HOST: z.string().default(""),
     EMAIL_SERVER_PORT: z.coerce.number().default(0),
@@ -80,6 +86,22 @@ export const processEnv = {
     // OpenAI - From OpenAI Platform > Settings > Organization ID (optional)
     // Example: "org-abcdefghijklmnopqrstuvwx"
     OPENAI_ORGANIZATION_ID: process.env.OPENAI_ORGANIZATION_ID,
+
+    // AWS S3 - From AWS IAM > Access Keys
+    // Example: "AKIAIOSFODNN7EXAMPLE"
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+
+    // AWS S3 - Secret key from AWS IAM
+    // Example: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+
+    // AWS S3 - Region for data sovereignty
+    // Example: "ap-southeast-2"
+    AWS_REGION: process.env.AWS_REGION,
+
+    // AWS S3 - Bucket name for invoice storage
+    // Example: "your-invoice-storage-bucket"
+    AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
 
     // Email SMTP - From Gmail, Outlook, or SendGrid
     // Example: "smtp.gmail.com" or "smtp-mail.outlook.com"

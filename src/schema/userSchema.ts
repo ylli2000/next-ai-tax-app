@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { VALIDATION_RULES } from "./commonSchemas";
-import { ERROR_MESSAGES } from "./messageSchema";
 
 export const USER_CONSTANTS = {
     DEFAULT_ADMIN_EMAIL: "admin@example.com", // Used in seed.ts for creating admin user

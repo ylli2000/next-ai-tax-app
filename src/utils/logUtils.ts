@@ -58,6 +58,7 @@ export const createCustomLogger = (options: LoggerOptions = {}): Logger => {
             body: JSON.stringify({
                 level: msgLevel,
                 message,
+                data: data || undefined,
                 timestamp: new Date().toISOString(),
             }),
         });

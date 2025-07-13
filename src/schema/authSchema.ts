@@ -52,6 +52,7 @@ export const AUTH_CONSTANTS = {
     ONE_MINUTE_MS: 60 * 1000, // Used in authUtils.ts for time calculations (1 minute in milliseconds)
     ONE_HOUR_MS: 60 * 60 * 1000, // Used in authUtils.ts for time calculations (1 hour in milliseconds)
     ONE_DAY_MS: 24 * 60 * 60 * 1000, // Used in authUtils.ts for time calculations (24 hours in milliseconds)
+    ONE_WEEK_MS: 7 * 24 * 60 * 60 * 1000, // Used in authUtils.ts for time calculations (7 days in milliseconds)
 } as const;
 
 // Core authentication form schemas

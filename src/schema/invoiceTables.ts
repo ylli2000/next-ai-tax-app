@@ -16,7 +16,7 @@ import {
     InvoiceCategoryEnum,
     InvoiceStatusEnum,
 } from "./invoiceSchema";
-import { UPLOAD_CONSTANTS, UploadStatusEnum } from "./uploadSchema";
+import { UploadStatusEnum } from "./uploadSchema";
 import { users } from "./userTables";
 
 export const invoiceStatusEnum = pgEnum("invoice_status", InvoiceStatusEnum);
@@ -38,10 +38,7 @@ export const invoiceFiles = pgTable("invoice_files", {
     fileName: text("file_name").notNull(),
     fileSize: integer("file_size").notNull(),
     mimeType: text("mime_type").notNull(),
-    openaiFileId: text("openai_file_id"),
-    uploadStatus: uploadStatusEnum("upload_status")
-        .notNull()
-        .default(UPLOAD_CONSTANTS.DEFAULT_UPLOAD_STATUS),
+    s3ObjectKey: text("s3_object_key").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type InvoiceFile = typeof invoiceFiles.$inferSelect;
@@ -69,18 +66,22 @@ export const invoices = pgTable(
         subtotal: decimal("subtotal", {
             precision: PRECISION_CONSTANTS.DECIMAL_PRECISION,
             scale: PRECISION_CONSTANTS.DECIMAL_SCALE,
+            mode: "number",
         }),
         taxAmount: decimal("tax_amount", {
             precision: PRECISION_CONSTANTS.DECIMAL_PRECISION,
             scale: PRECISION_CONSTANTS.DECIMAL_SCALE,
+            mode: "number",
         }),
         taxRate: decimal("tax_rate", {
             precision: PRECISION_CONSTANTS.TAX_RATE_PRECISION,
             scale: PRECISION_CONSTANTS.TAX_RATE_SCALE,
+            mode: "number",
         }),
         totalAmount: decimal("total_amount", {
             precision: PRECISION_CONSTANTS.DECIMAL_PRECISION,
             scale: PRECISION_CONSTANTS.DECIMAL_SCALE,
+            mode: "number",
         }),
         currency: text("currency").default(
             FINANCIAL_CONSTANTS.DEFAULT_CURRENCY,
@@ -102,6 +103,7 @@ export const invoices = pgTable(
         aiConfidenceScore: decimal("ai_confidence_score", {
             precision: PRECISION_CONSTANTS.CONFIDENCE_PRECISION,
             scale: PRECISION_CONSTANTS.CONFIDENCE_SCALE,
+            mode: "number",
         }),
         validationStatus: validationStatusEnum("validation_status")
             .notNull()

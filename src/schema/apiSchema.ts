@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ERROR_MESSAGES, ErrorMessageKeysSchema } from "./messageSchema";
+import { ERROR_MESSAGES, ErrorMessageValuesSchema } from "./messageSchema";
 
 /**
  * API-related schemas using Zod for runtime validation and type inference
@@ -143,7 +143,7 @@ export const createApiResponseSchema = <T extends z.ZodTypeAny>(
     z.object({
         success: z.boolean(),
         data: dataSchema.optional(),
-        error: ErrorMessageKeysSchema.optional(), // Error code from messageSchema (e.g., 'RECORD_NOT_FOUND', 'SERVER_ERROR')
+        error: ErrorMessageValuesSchema.optional(), // Error code from messageSchema (e.g., 'RECORD_NOT_FOUND', 'SERVER_ERROR')
         message: z.string().optional(), // User-friendly error message (e.g., 'Record not found')
         statusCode: z.number().optional(),
         timestamp: z.string().datetime().optional(),

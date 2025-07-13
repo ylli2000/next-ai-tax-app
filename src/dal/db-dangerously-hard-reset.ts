@@ -71,7 +71,9 @@ async function hardResetDatabase() {
         `;
 
         for (const sequence of sequencesResult) {
-            await sql.query(`DROP SEQUENCE IF EXISTS "${sequence.sequence_name}" CASCADE`);
+            await sql.query(
+                `DROP SEQUENCE IF EXISTS "${sequence.sequence_name}" CASCADE`,
+            );
         }
 
         // Drop all views
