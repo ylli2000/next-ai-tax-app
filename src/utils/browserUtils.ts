@@ -267,7 +267,9 @@ export const openFilePickerNative = async (
             });
 
             const files = await Promise.all(
-                fileHandles.map((handle: any) => handle.getFile()),
+                fileHandles.map((handle: FileSystemFileHandle) =>
+                    handle.getFile(),
+                ),
             );
             return files;
         } catch (error) {

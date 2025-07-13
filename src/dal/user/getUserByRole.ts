@@ -1,38 +1,27 @@
 import { eq } from "drizzle-orm";
 import { users, userProfiles } from "@/schema/userTables";
 import { type UserRole } from "@/schema/userSchema";
-import { ERROR_MESSAGES } from "@/schema/messageSchema";
-import { logError } from "@/utils/logUtils";
+import { type UserWithProfile } from "@/schema/userQueries";
 import { db } from "../db";
 
 /**
  * Retrieves all users with a specific role
  * Returns users with their profiles ordered by creation date
  * @param role - User role to filter by (USER, ACCOUNTANT, ADMIN)
- * @returns Success response with users matching the role, or error response
+ * @returns Array of users with profile data matching the role
  */
-export const getUsersByRole = async (role: UserRole) => {
-    try {
-        const result = await db
-            .select({
-                user: users,
-                profile: userProfiles,
-            })
-            .from(users)
-            .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
-            .where(eq(users.role, role))
-            .orderBy(users.createdAt);
+export const getUsersByRole = async (
+    role: UserRole,
+): Promise<UserWithProfile[]> => {
+    const result = await db
+        .select({
+            user: users,
+            profile: userProfiles,
+        })
+        .from(users)
+        .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+        .where(eq(users.role, role))
+        .orderBy(users.createdAt);
 
-        return {
-            success: true,
-            data: result,
-        };
-    } catch (error) {
-        logError("Failed to get users by role", { error, role });
-        return {
-            success: false,
-            error: ERROR_MESSAGES.DATABASE_ERROR,
-            data: null,
-        };
-    }
+    return result;
 };

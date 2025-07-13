@@ -267,8 +267,8 @@ export class UploadQueue {
     private queue: Array<{
         file: File;
         userId: string;
-        resolve: (result: any) => void;
-        reject: (error: any) => void;
+        resolve: (result: unknown) => void;
+        reject: (error: unknown) => void;
     }> = [];
     private processing = new Set<string>();
     private maxConcurrent: number;
@@ -293,7 +293,7 @@ export class UploadQueue {
     /**
      * Add file to upload queue
      */
-    async add(file: File, userId: string): Promise<any> {
+    async add(file: File, userId: string): Promise<unknown> {
         return new Promise((resolve, reject) => {
             this.queue.push({ file, userId, resolve, reject });
             this.processQueue();

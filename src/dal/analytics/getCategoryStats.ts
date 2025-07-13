@@ -4,12 +4,11 @@ import {
     INVOICE_CATEGORIES,
     type InvoiceCategory,
 } from "@/schema/invoiceSchema";
-import { 
-    type RawCategoryStats, 
-    type EnrichedCategoryStats, 
-    type CategoryStatsData 
+import {
+    type RawCategoryStats,
+    type EnrichedCategoryStats,
+    type CategoryStatsData,
 } from "@/schema/invoiceQueries";
-import { logError } from "@/utils/logUtils";
 import { db } from "../db";
 
 // Internal helper type for calculating totals

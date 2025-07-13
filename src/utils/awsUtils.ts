@@ -1,7 +1,8 @@
+import { Readable } from "stream";
 import { env } from "@/schema/envSchema";
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
 import { logError, logInfo } from "./logUtils";
-const { HeadObjectCommand } = await import("@aws-sdk/client-s3");
+
 /**
  * AWS S3 Storage Utilities
  * Handles file uploads, downloads, and management for long-term invoice archival
@@ -9,18 +10,18 @@ const { HeadObjectCommand } = await import("@aws-sdk/client-s3");
  */
 
 // We'll use dynamic imports to avoid bundling AWS SDK in client-side code
-type S3Client = any;
-type PutObjectCommand = any;
-type GetObjectCommand = any;
-type DeleteObjectCommand = any;
 
-let s3Client: S3Client | null = null;
+// type PutObjectCommand = any;
+// type GetObjectCommand = any;
+// type DeleteObjectCommand = any;
+
+let s3Client: unknown = null;
 
 /**
  * Initialize S3 client with configuration
  * Uses lazy loading to avoid client-side bundling issues
  */
-const initS3Client = async (): Promise<S3Client> => {
+const initS3Client = async (): Promise<unknown> => {
     if (s3Client) return s3Client;
 
     try {
@@ -88,8 +89,11 @@ export const uploadToS3 = async (
     error?: string;
 }> => {
     try {
-        const client = await initS3Client();
-        const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, PutObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
 
         const s3ObjectKey = generateS3ObjectKey(userId, file.name);
 
@@ -150,8 +154,11 @@ export const downloadFromS3 = async (
     error?: string;
 }> => {
     try {
-        const client = await initS3Client();
-        const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, GetObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
 
         const command = new GetObjectCommand({
             Bucket: env.AWS_S3_BUCKET,
@@ -165,8 +172,8 @@ export const downloadFromS3 = async (
         }
 
         // Convert stream to buffer
-        const chunks: any[] = [];
-        const stream = response.Body as any;
+        const chunks: Uint8Array[] = [];
+        const stream = response.Body as Readable;
 
         for await (const chunk of stream) {
             chunks.push(chunk);
@@ -204,8 +211,11 @@ export const deleteFromS3 = async (
     error?: string;
 }> => {
     try {
-        const client = await initS3Client();
-        const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, DeleteObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
 
         const command = new DeleteObjectCommand({
             Bucket: env.AWS_S3_BUCKET,
@@ -234,8 +244,11 @@ export const checkS3FileExists = async (
     s3ObjectKey: string,
 ): Promise<boolean> => {
     try {
-        const client = await initS3Client();
-        const { HeadObjectCommand } = await import("@aws-sdk/client-s3");
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, HeadObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
 
         const command = new HeadObjectCommand({
             Bucket: env.AWS_S3_BUCKET,
@@ -246,6 +259,10 @@ export const checkS3FileExists = async (
         return true;
     } catch (error) {
         // HeadObject throws error if file doesn't exist
+        logError("Failed to check if file exists in S3", {
+            error,
+            s3ObjectKey,
+        });
         return false;
     }
 };
@@ -267,7 +284,11 @@ export const getS3FileMetadata = async (
     error?: string;
 }> => {
     try {
-        const client = await initS3Client();
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, HeadObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
 
         const command = new HeadObjectCommand({
             Bucket: env.AWS_S3_BUCKET,

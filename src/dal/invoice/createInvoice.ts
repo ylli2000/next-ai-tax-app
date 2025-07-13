@@ -1,7 +1,7 @@
 import { invoices, type Invoice } from "@/schema/invoiceTables";
 import {
     type CreateInvoiceData,
-    createInvoiceDataSchema,
+    insertInvoiceSchema,
 } from "@/schema/invoiceQueries";
 import { logInfo } from "@/utils/logUtils";
 import { db } from "../db";
@@ -13,22 +13,20 @@ import { db } from "../db";
  * @returns Created invoice data
  * @throws Error if validation fails or database query fails
  */
-export const createInvoice = async (invoiceData: CreateInvoiceData): Promise<Invoice> => {
-    const validatedData = createInvoiceDataSchema.parse(invoiceData);
-    
+export const createInvoice = async (
+    invoiceData: CreateInvoiceData,
+): Promise<Invoice> => {
+    const validatedData = insertInvoiceSchema.parse(invoiceData);
+
     const [newInvoice] = await db
         .insert(invoices)
-        .values({
-            userId: validatedData.userId,
-            fileId: validatedData.fileId,
-            status: validatedData.status || "PENDING",
-        })
+        .values(validatedData)
         .returning();
-        
+
     logInfo(`Invoice created successfully`, {
         invoiceId: newInvoice.id,
         userId: validatedData.userId,
     });
-    
+
     return newInvoice;
 };

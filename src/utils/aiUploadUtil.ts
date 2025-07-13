@@ -6,8 +6,8 @@ import { logError, logInfo } from "./logUtils";
  * Handles file operations with OpenAI Files API
  */
 
-// OpenAI client caching (similar to awsUtils.ts pattern)
-let openaiClient: any = null;
+// OpenAI client caching (Dynamic import)
+let openaiClient: unknown = null;
 
 // ===== Client Management =====
 
@@ -22,17 +22,11 @@ const initOpenAIClient = async () => {
         // Dynamic import to avoid client-side bundling
         const { OpenAI } = await import("openai");
         const { env } = await import("@/schema/envSchema");
-
         openaiClient = new OpenAI({
             apiKey: env.OPENAI_API_KEY,
-            organization: env.OPENAI_ORGANIZATION_ID || undefined,
+            organization: env.OPENAI_ORGANIZATION_ID,
         });
-
-        logInfo("OpenAI client initialized successfully", {
-            hasApiKey: !!env.OPENAI_API_KEY,
-            hasOrgId: !!env.OPENAI_ORGANIZATION_ID,
-        });
-
+        logInfo("OpenAI client initialized successfully");
         return openaiClient;
     } catch (error) {
         logError("Failed to initialize OpenAI client", { error });
@@ -55,7 +49,11 @@ export const uploadToOpenAI = async (
 }> => {
     try {
         // Use cached OpenAI client
-        const openai = await initOpenAIClient();
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { OpenAI } = await import("openai");
+        const openai = (await initOpenAIClient()) as InstanceType<
+            typeof OpenAI
+        >;
 
         // Convert File to the format OpenAI expects
         const fileForUpload = new File([file], file.name, {
@@ -101,9 +99,13 @@ export const deleteOpenAIFile = async (
 }> => {
     try {
         // Use cached OpenAI client
-        const openai = await initOpenAIClient();
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { OpenAI } = await import("openai");
+        const openai = (await initOpenAIClient()) as InstanceType<
+            typeof OpenAI
+        >;
 
-        await openai.files.del(openaiFileId);
+        await openai.files.delete(openaiFileId);
 
         logInfo("OpenAI file deleted successfully", { openaiFileId });
 

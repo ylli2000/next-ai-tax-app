@@ -57,9 +57,10 @@ export const INVOICE_CONSTANTS = {
     DEFAULT_VALIDATION_STATUS: "PENDING" as ValidationStatus, // Used in AI validation workflow
     DEFAULT_INVOICE_STATUS: "PENDING" as InvoiceStatus, // Used in invoice creation and status initialization
     TRUNCATE_SUFFIX: "...", // Used in formatUtils.ts for text truncation suffix
-    INVOICE_PREFIX: "INV", // Used in formatUtils.ts for invoice number formatting
+    INVOICE_PREFIX: "INV-", // Used in formatUtils.ts for invoice number formatting
     INVOICE_NUMBER_PADDING: 6, // Used in formatUtils.ts for invoice number padding length
     CREDIT_CARD_GROUP_SIZE: 4, // Used in formatUtils.ts for credit card number grouping
+    DEFAULT_ITEMS_PER_PAGE: 20, // Used in formatUtils.ts for default items per page
     DEFAULT_TRUNCATE_LENGTH: 50, // Used in formatUtils.ts for default text truncation length
 } as const;
 

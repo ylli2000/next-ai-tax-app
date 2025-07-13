@@ -5,6 +5,33 @@ import { VALIDATION_RULES } from "./commonSchemas";
 import { allowedMimeTypeSchema, validFileFormatSchema } from "./uploadSchema";
 
 /**
+ * Map OpenAI errors to consistent error codes and messages
+ * Uses ternary operators for concise and readable code like mapHttpError
+ */
+export const mapOpenAIError = (
+    error: unknown,
+): {
+    code: keyof typeof ERROR_MESSAGES;
+    message: string;
+} => {
+    if (!(error instanceof Error))
+        return {
+            code: "AI_PROCESSING_FAILED",
+            message: ERROR_MESSAGES.AI_PROCESSING_FAILED,
+        };
+    const e = error.message.toLowerCase();
+    // prettier-ignore
+    const code: keyof typeof ERROR_MESSAGES = 
+        e.includes("rate_limit")     || e.includes("429")         ? "OPENAI_RATE_LIMIT" :
+        e.includes("invalid_file")   || e.includes("unsupported") ? "OPENAI_INVALID_FILE" :
+        e.includes("file_not_found") || e.includes("404")         ? "OPENAI_FILE_NOT_FOUND" :
+        e.includes("timeout")                                     ? "OPENAI_PROCESSING_TIMEOUT" :
+        e.includes("no response")                                 ? "OPENAI_API_ERROR" : "AI_PROCESSING_FAILED";
+    const message = ERROR_MESSAGES[code];
+    return { code, message };
+};
+
+/**
  * AI-related schemas using Zod for runtime validation and type inference
  * Handles AI processing, validation, and anomaly detection
  */

@@ -1,7 +1,10 @@
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
 import { type UploadStatus } from "@/schema/uploadSchema";
+import { ExtractedInvoiceData } from "@/schema/aiSchema";
 import { logError, logInfo } from "./logUtils";
 import { processWithOpenAI } from "./aiProcessUtil";
+import { uploadToS3 } from "./awsUtils";
+import { uploadToOpenAI, deleteOpenAIFile } from "./aiUploadUtil";
 
 /**
  * Dual storage coordination utilities
@@ -31,7 +34,6 @@ export const uploadToDualStorage = async (
         // Stage 1: Upload to S3 for permanent storage
         onProgressUpdate?.("UPLOADING_STAGE_1", 0);
 
-        const { uploadToS3 } = await import("./awsUtils");
         const s3Result = await uploadToS3(file, userId);
 
         if (!s3Result.success) {
@@ -46,7 +48,6 @@ export const uploadToDualStorage = async (
         // Stage 2: Upload to OpenAI for temporary processing
         onProgressUpdate?.("UPLOADING_STAGE_2", 60);
 
-        const { uploadToOpenAI } = await import("./aiUploadUtil");
         const openaiResult = await uploadToOpenAI(file);
 
         if (!openaiResult.success) {
@@ -101,7 +102,7 @@ export const processDualStorageWorkflow = async (
 ): Promise<{
     success: boolean;
     s3ObjectKey?: string;
-    extractedData?: any;
+    extractedData?: ExtractedInvoiceData;
     error?: string;
 }> => {
     try {
@@ -130,7 +131,6 @@ export const processDualStorageWorkflow = async (
 
         // Step 4: Cleanup OpenAI file (success or failure)
         if (uploadResult.openaiFileId) {
-            const { deleteOpenAIFile } = await import("./aiUploadUtil");
             await deleteOpenAIFile(uploadResult.openaiFileId);
             logInfo("OpenAI file cleanup completed", {
                 userId,

@@ -19,11 +19,9 @@ export const getInvoiceById = async (id: string): Promise<InvoiceWithFile> => {
         .leftJoin(invoiceFiles, eq(invoices.fileId, invoiceFiles.id))
         .where(eq(invoices.id, id))
         .limit(1);
-        
     if (result.length === 0) {
         throw new Error(`Invoice with ID ${id} not found`);
     }
-    
     const [{ invoice, file }] = result;
     return { invoice, file };
 };

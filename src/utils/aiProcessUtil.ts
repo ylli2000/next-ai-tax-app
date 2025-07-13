@@ -1,7 +1,11 @@
+import { OpenAI } from "openai";
 import {
     AI_CATEGORY_CONSTANTS,
     AI_VALIDATION_CONSTANTS,
     extractedInvoiceDataSchema,
+    OPENAI_CONSTANTS,
+    AI_PROMPTS,
+    mapOpenAIError,
     type AIExtractionResponse,
     type ExtractedInvoiceData,
     type SmartCategoryResult,
@@ -15,6 +19,7 @@ import {
     ERROR_MESSAGES,
     AIValidationErrorCode,
 } from "@/schema/messageSchema";
+import { env } from "@/schema/envSchema";
 import { UploadStatus } from "@/schema/uploadSchema";
 import { logInfo, logError } from "./logUtils";
 
@@ -26,40 +31,98 @@ import { logInfo, logError } from "./logUtils";
 // ===== Processing and Cleanup =====
 
 /**
- * TODO: Implement actual OpenAI processing logic
  * Process file with OpenAI for invoice data extraction
- * This is a placeholder for the actual AI processing logic
+ * Uses OpenAI Vision API to analyze invoice images and extract structured data
  */
 export const processWithOpenAI = async (
     openaiFileId: string,
     onProgressUpdate?: (status: UploadStatus, progress: number) => void,
-): Promise<any> => {
+): Promise<ExtractedInvoiceData> => {
     try {
-        onProgressUpdate?.("PROCESSING", 20);
+        onProgressUpdate?.("PROCESSING", 10);
 
-        // TODO: Implement actual OpenAI processing logic
-        // This would call the OpenAI API to analyze the invoice
-        // and extract structured data
-        // Example: const response = await _openai.chat.completions.create({...});
+        // Initialize OpenAI client
+        const openai = new OpenAI({
+            apiKey: env.OPENAI_API_KEY,
+            organization: env.OPENAI_ORGANIZATION_ID,
+        });
 
-        logInfo("Processing file with OpenAI", { openaiFileId });
+        onProgressUpdate?.("PROCESSING", 30);
 
-        // Simulate processing time
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        onProgressUpdate?.("PROCESSING", 80);
+        // Create chat completion with vision for invoice analysis
+        const response = await openai.chat.completions.create({
+            model: OPENAI_CONSTANTS.VISION_MODEL,
+            max_tokens: OPENAI_CONSTANTS.MAX_TOKENS,
+            temperature: OPENAI_CONSTANTS.TEMPERATURE,
+            messages: [
+                {
+                    role: "system",
+                    content: AI_PROMPTS.SYSTEM_PROMPT,
+                },
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: AI_PROMPTS.USER_PROMPT,
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: `https://files.openai.com/files/${openaiFileId}`,
+                            },
+                        },
+                    ],
+                },
+            ],
+        });
 
-        // Placeholder return - replace with actual implementation
-        const extractedData = {
-            invoiceNumber: "INV-001",
-            supplierName: "Example Supplier",
-            totalAmount: 100.0,
-            // ... other extracted fields
-        };
+        onProgressUpdate?.("PROCESSING", 70);
 
-        return extractedData;
+        // Parse OpenAI response
+        const responseText = response.choices[0]?.message?.content;
+        if (!responseText) {
+            throw new Error("No response from OpenAI");
+        }
+
+        onProgressUpdate?.("PROCESSING", 85);
+
+        // Extract JSON from response (handle potential markdown formatting)
+        let jsonData;
+        try {
+            // Remove any markdown formatting or extra text
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            const jsonString = jsonMatch ? jsonMatch[0] : responseText;
+            jsonData = JSON.parse(jsonString);
+        } catch (parseError) {
+            logError("Failed to parse OpenAI JSON response", {
+                responseText,
+                parseError,
+            });
+            throw new Error(ERROR_MESSAGES.INVALID_AI_RESPONSE_FORMAT);
+        }
+
+        onProgressUpdate?.("PROCESSING", 95);
+
+        // Validate and transform the response using our schema
+        const validatedData = extractedInvoiceDataSchema.parse(jsonData);
+
+        logInfo("OpenAI processing completed successfully", {
+            openaiFileId,
+            invoiceNumber: validatedData.invoiceNumber,
+            supplierName: validatedData.supplierName,
+            totalAmount: validatedData.totalAmount,
+            suggestedCategory: validatedData.suggestedCategory,
+            categoryConfidence: validatedData.categoryConfidence,
+        });
+
+        onProgressUpdate?.("PROCESSING", 100);
+
+        return validatedData;
     } catch (error) {
-        logError("Failed to process file with OpenAI", { error, openaiFileId });
-        throw error;
+        logError("OpenAI processing failed", { error, openaiFileId });
+        const { message } = mapOpenAIError(error);
+        throw new Error(message, { cause: error });
     }
 };
 

@@ -70,6 +70,17 @@ export const ERROR_MESSAGES = {
     OPENAI_MODEL_NOT_CONFIGURED: "OpenAI model is not configured",
     INVALID_MAX_TOKENS_CONFIG: "Invalid max tokens configuration",
 
+    // OpenAI API specific errors
+    OPENAI_RATE_LIMIT:
+        "AI service is temporarily busy. Please try again in a moment.",
+    OPENAI_INVALID_FILE:
+        "The uploaded file format is not supported for AI analysis.",
+    OPENAI_FILE_NOT_FOUND:
+        "The uploaded file could not be found. Please try uploading again.",
+    OPENAI_PROCESSING_TIMEOUT:
+        "AI processing is taking longer than expected. Please try again.",
+    OPENAI_API_ERROR: "AI processing failed. Please try again later.",
+
     // Database errors
     DATABASE_ERROR:
         "Something went wrong while saving your data. Please try again",
