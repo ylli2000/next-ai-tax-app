@@ -77,66 +77,68 @@ export const generateS3ObjectKey = (
 };
 
 /**
- * Upload file to S3 with optimized settings
- * Returns S3 object key for database storage
+ * Confirm S3 file upload completion
+ * Verifies that the file exists and returns its metadata
  */
-export const uploadToS3 = async (
-    file: File,
-    userId: string,
+export const confirmS3FileUpload = async (
+    s3ObjectKey: string,
 ): Promise<{
     success: boolean;
-    s3ObjectKey?: string;
+    fileExists: boolean;
+    metadata?: {
+        size: number;
+        contentType: string;
+        lastModified: Date;
+        originalName?: string;
+    };
     error?: string;
 }> => {
     try {
-        // eslint-disable-next-line unused-imports/no-unused-vars
-        const { S3Client, PutObjectCommand } = await import(
-            "@aws-sdk/client-s3"
-        );
-        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
+        // Check if file exists
+        const exists = await checkS3FileExists(s3ObjectKey);
 
-        const s3ObjectKey = generateS3ObjectKey(userId, file.name);
+        if (!exists) {
+            return {
+                success: false,
+                fileExists: false,
+                error: ERROR_MESSAGES.S3_FILE_NOT_CONFIRMED,
+            };
+        }
 
-        // Convert File to Buffer for upload
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        // Get file metadata
+        const metadataResult = await getS3FileMetadata(s3ObjectKey);
 
-        const command = new PutObjectCommand({
-            Bucket: env.AWS_S3_BUCKET,
-            Key: s3ObjectKey,
-            Body: buffer,
-            ContentType: file.type,
-            ContentLength: file.size,
-            Metadata: {
-                originalName: file.name,
-                userId: userId,
-                uploadDate: new Date().toISOString(),
-            },
-            // Storage class for long-term archival (7-year retention)
-            StorageClass: "STANDARD_IA", // Infrequent Access for cost optimization
-        });
+        if (!metadataResult.success) {
+            return {
+                success: false,
+                fileExists: true,
+                error: metadataResult.error,
+            };
+        }
 
-        await client.send(command);
-
-        logInfo("File uploaded to S3 successfully", {
+        logInfo("S3 file upload confirmed successfully", {
             s3ObjectKey,
-            fileSize: file.size,
-            userId,
+            size: metadataResult.metadata!.size,
+            contentType: metadataResult.metadata!.contentType,
         });
 
         return {
             success: true,
-            s3ObjectKey,
+            fileExists: true,
+            metadata: {
+                size: metadataResult.metadata!.size,
+                contentType: metadataResult.metadata!.contentType,
+                lastModified: metadataResult.metadata!.lastModified,
+                originalName:
+                    metadataResult.metadata!.customMetadata.originalName,
+            },
         };
     } catch (error) {
-        logError("Failed to upload file to S3", {
-            error,
-            userId,
-            fileName: file.name,
-        });
+        logError("Failed to confirm S3 file upload", { error, s3ObjectKey });
         return {
             success: false,
-            error: ERROR_MESSAGES.S3_UPLOAD_FAILED,
+            fileExists: false,
+            error: ERROR_MESSAGES.UPLOAD_CONFIRMATION_FAILED,
         };
     }
 };
@@ -311,6 +313,121 @@ export const getS3FileMetadata = async (
         return {
             success: false,
             error: ERROR_MESSAGES.S3_METADATA_FAILED,
+        };
+    }
+};
+
+/**
+ * Generate pre-signed URL for downloading files from S3
+ * Provides secure, time-limited access to private S3 objects
+ * Used for viewing/downloading invoice files safely
+ */
+export const generatePresignedDownloadUrl = async (
+    s3ObjectKey: string,
+    expiresIn: number = 3600, // 1 hour default
+): Promise<{
+    success: boolean;
+    signedUrl?: string;
+    error?: string;
+}> => {
+    try {
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, GetObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
+
+        const command = new GetObjectCommand({
+            Bucket: env.AWS_S3_BUCKET,
+            Key: s3ObjectKey,
+        });
+
+        const signedUrl = await getSignedUrl(client, command, {
+            expiresIn,
+        });
+
+        logInfo("Pre-signed download URL generated successfully", {
+            s3ObjectKey,
+            expiresIn,
+        });
+
+        return {
+            success: true,
+            signedUrl,
+        };
+    } catch (error) {
+        logError("Failed to generate pre-signed download URL", {
+            error,
+            s3ObjectKey,
+        });
+        return {
+            success: false,
+            error: ERROR_MESSAGES.S3_DOWNLOAD_FAILED,
+        };
+    }
+};
+
+/**
+ * Generate pre-signed URL for uploading files to S3
+ * Enables secure client-side direct uploads without exposing AWS credentials
+ * Used for invoice file uploads with proper security controls
+ */
+export const generatePresignedUploadUrl = async (
+    s3ObjectKey: string,
+    contentType: string,
+    expiresIn: number = 900, // 15 minutes for uploads
+): Promise<{
+    success: boolean;
+    signedUrl?: string;
+    fields?: Record<string, string>;
+    error?: string;
+}> => {
+    try {
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        const { S3Client, PutObjectCommand } = await import(
+            "@aws-sdk/client-s3"
+        );
+        const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+        const client = (await initS3Client()) as InstanceType<typeof S3Client>;
+
+        const command = new PutObjectCommand({
+            Bucket: env.AWS_S3_BUCKET,
+            Key: s3ObjectKey,
+            ContentType: contentType,
+            // Add security headers
+            ServerSideEncryption: "AES256",
+            StorageClass: "STANDARD_IA", // Infrequent Access for cost optimization
+        });
+
+        const signedUrl = await getSignedUrl(client, command, {
+            expiresIn,
+        });
+
+        logInfo("Pre-signed upload URL generated successfully", {
+            s3ObjectKey,
+            contentType,
+            expiresIn,
+        });
+
+        return {
+            success: true,
+            signedUrl,
+            fields: {
+                "Content-Type": contentType,
+                "x-amz-server-side-encryption": "AES256",
+                "x-amz-storage-class": "STANDARD_IA",
+            },
+        };
+    } catch (error) {
+        logError("Failed to generate pre-signed upload URL", {
+            error,
+            s3ObjectKey,
+            contentType,
+        });
+        return {
+            success: false,
+            error: ERROR_MESSAGES.S3_UPLOAD_FAILED,
         };
     }
 };

@@ -42,6 +42,12 @@ export const SUCCESS_MESSAGES = {
     USER_UPDATED_SUCCESSFULLY: "User updated successfully!",
     USER_DELETED_SUCCESSFULLY: "User deleted successfully!",
     USER_PROFILE_UPDATED_SUCCESSFULLY: "User profile updated successfully!",
+    PRESIGNED_URL_GENERATED: "Upload authorization generated successfully!",
+    CLIENT_UPLOAD_STARTED: "Starting file upload to cloud storage...",
+    CLIENT_UPLOAD_COMPLETED: "File uploaded to cloud storage successfully!",
+    UPLOAD_CONFIRMED: "Upload confirmed, starting AI analysis...",
+    AI_UPLOAD_STARTED: "Uploading file for AI processing...",
+    AI_UPLOAD_COMPLETED: "File ready for AI analysis...",
 } as const;
 
 export const SuccessMessageKeysEnum = Object.keys(SUCCESS_MESSAGES) as [
@@ -176,6 +182,20 @@ export const ERROR_MESSAGES = {
     S3_DOWNLOAD_FAILED: "Failed to download file from cloud storage",
     S3_DELETE_FAILED: "Failed to delete file from cloud storage",
     S3_METADATA_FAILED: "Failed to get file information from cloud storage",
+
+    // Pre-signed URL and upload session errors
+    PRESIGNED_URL_GENERATION_FAILED:
+        "Failed to generate upload authorization. Please try again",
+    CLIENT_UPLOAD_FAILED:
+        "Failed to upload to cloud storage. Please check your connection",
+    CLIENT_UPLOAD_TIMEOUT: "Upload timed out. Please try again",
+    UPLOAD_CONFIRMATION_FAILED: "Failed to confirm upload. Please try again",
+    UPLOAD_SESSION_EXPIRED: "Upload session expired. Please start over",
+    UPLOAD_SESSION_NOT_FOUND:
+        "Upload session not found. Please restart the upload",
+    S3_FILE_NOT_CONFIRMED:
+        "File not found in cloud storage. Please try uploading again",
+    AI_UPLOAD_PREPARATION_FAILED: "Failed to prepare file for AI analysis",
 
     // Export errors
     EXPORT_FAILED: "Export failed. Please try again",

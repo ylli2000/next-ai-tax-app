@@ -54,12 +54,14 @@ export type AllowedExtension = z.infer<typeof allowedExtensionSchema>;
 
 // File upload progress status
 export const UploadStatusEnum = [
-    "NOT_UPLOADED",
-    "UPLOADING_STAGE_1", // 正在上传至S3
-    "UPLOADING_STAGE_2", // 正在上传至OpenAI (临时)
-    "PROCESSING", // 正在等待OpenAI处理返回
-    "COMPLETED", // 处理完成，OpenAI文件已清理
-    "FAILED",
+    "NOT_UPLOADED", // 初始状态：等待开始上传
+    "PRESIGNED_GENERATED", // 已生成预签名URL，等待客户端上传
+    "CLIENT_UPLOADING", // 客户端正在上传到S3
+    "UPLOAD_CONFIRMED", // 服务端已确认S3上传成功
+    "AI_UPLOADING", // 正在上传到OpenAI进行AI处理
+    "PROCESSING", // AI正在分析发票
+    "COMPLETED", // 全流程完成
+    "FAILED", // 失败状态
 ] as const;
 export const uploadStatusSchema = z.enum(UploadStatusEnum);
 export type UploadStatus = z.infer<typeof uploadStatusSchema>;
@@ -78,17 +80,21 @@ export type UploadErrorCode = z.infer<typeof uploadErrorCodeSchema>;
 // Upload status display constants for UI
 export const UPLOAD_STATUS_MESSAGES: Record<UploadStatus, string> = {
     NOT_UPLOADED: "Ready to upload",
-    UPLOADING_STAGE_1: "Uploading to storage...",
-    UPLOADING_STAGE_2: "Uploading for processing...",
-    PROCESSING: "Processing with AI...",
-    COMPLETED: "Upload completed",
+    PRESIGNED_GENERATED: "Upload authorization ready...",
+    CLIENT_UPLOADING: "Uploading to cloud storage...",
+    UPLOAD_CONFIRMED: "Upload confirmed, preparing AI analysis...",
+    AI_UPLOADING: "Uploading for AI processing...",
+    PROCESSING: "AI analyzing your invoice...",
+    COMPLETED: "Upload and analysis completed",
     FAILED: "Upload failed",
 } as const;
 
 export const UPLOAD_STATUS_COLORS: Record<UploadStatus, string> = {
     NOT_UPLOADED: "gray",
-    UPLOADING_STAGE_1: "blue",
-    UPLOADING_STAGE_2: "blue",
+    PRESIGNED_GENERATED: "yellow",
+    CLIENT_UPLOADING: "blue",
+    UPLOAD_CONFIRMED: "cyan",
+    AI_UPLOADING: "blue",
     PROCESSING: "orange",
     COMPLETED: "green",
     FAILED: "red",
@@ -96,8 +102,10 @@ export const UPLOAD_STATUS_COLORS: Record<UploadStatus, string> = {
 
 export const UPLOAD_STATUS_ICONS: Record<UploadStatus, string> = {
     NOT_UPLOADED: "upload",
-    UPLOADING_STAGE_1: "loading",
-    UPLOADING_STAGE_2: "loading",
+    PRESIGNED_GENERATED: "key",
+    CLIENT_UPLOADING: "loading",
+    UPLOAD_CONFIRMED: "check-circle",
+    AI_UPLOADING: "loading",
     PROCESSING: "cog",
     COMPLETED: "check",
     FAILED: "x",
@@ -142,10 +150,8 @@ export const UPLOAD_CONSTANTS = {
     // Filename safety for uploadUtils.ts
     UNSAFE_FILENAME_CHARS: /[<>:"/\\|?*]/g, // Used in uploadUtils.ts for filename sanitization
 
-    // Bulk upload constants
-    AVERAGE_UPLOAD_SPEED_BYTES_PER_SECOND: 1024 * 100, // 100KB/s estimated upload speed for time calculation
-    DEFAULT_BATCH_SIZE: 3, // Maximum files to process simultaneously in batch upload
-    MAX_CONCURRENT_UPLOADS: 2, // Maximum concurrent upload operations
+    // Frontend multi-file upload constants
+    AVERAGE_UPLOAD_SPEED_BYTES_PER_SECOND: 1024 * 100, // 100KB/s estimated upload speed for time calculation (frontend display only)
 
     // Default fallback values for UI display
     DEFAULT_STATUS_MESSAGE: UPLOAD_STATUS_MESSAGES.NOT_UPLOADED, // Fallback to NOT_UPLOADED status message
@@ -155,9 +161,11 @@ export const UPLOAD_CONSTANTS = {
 
 // Upload status transitions matrix for validation
 export const VALID_STATUS_TRANSITIONS: Record<UploadStatus, UploadStatus[]> = {
-    NOT_UPLOADED: ["UPLOADING_STAGE_1", "FAILED"],
-    UPLOADING_STAGE_1: ["UPLOADING_STAGE_2", "FAILED"],
-    UPLOADING_STAGE_2: ["PROCESSING", "FAILED"],
+    NOT_UPLOADED: ["PRESIGNED_GENERATED", "FAILED"],
+    PRESIGNED_GENERATED: ["CLIENT_UPLOADING", "FAILED"],
+    CLIENT_UPLOADING: ["UPLOAD_CONFIRMED", "FAILED"],
+    UPLOAD_CONFIRMED: ["AI_UPLOADING", "FAILED"],
+    AI_UPLOADING: ["PROCESSING", "FAILED"],
     PROCESSING: ["COMPLETED", "FAILED"],
     COMPLETED: [], // Terminal state
     FAILED: ["NOT_UPLOADED"], // Can retry
@@ -239,13 +247,8 @@ export const uploadProgressSchema = z.object({
 });
 export type UploadProgress = z.infer<typeof uploadProgressSchema>;
 
-// Bulk upload schema
-export const bulkUploadSchema = z.object({
-    files: z.array(validFileFormatSchema).min(1).max(10), // Maximum 10 files
-    userId: z.string().uuid(ERROR_MESSAGES.INVALID_UUID),
-    options: uploadConfigSchema.optional(),
-});
-export type BulkUpload = z.infer<typeof bulkUploadSchema>;
+// Note: Frontend parallel upload uses individual file uploads with independent pre-signed URLs
+// No backend bulk upload schema needed - each file follows the single-file workflow
 
 // Upload completion schema (file upload completion, not invoice processing)
 export const uploadCompletionSchema = z.object({

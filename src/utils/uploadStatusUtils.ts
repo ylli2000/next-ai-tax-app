@@ -77,21 +77,33 @@ export const isUploadIdle = (status: UploadStatus): boolean =>
  * Check if upload is currently processing
  */
 export const isUploadProcessing = (status: UploadStatus): boolean =>
-    status === "UPLOADING_STAGE_1" ||
-    status === "UPLOADING_STAGE_2" ||
+    status === "CLIENT_UPLOADING" ||
+    status === "AI_UPLOADING" ||
     status === "PROCESSING";
 
 /**
- * Check if upload is in stage 1 (S3 upload)
+ * Check if pre-signed URL has been generated
  */
-export const isUploadingToS3 = (status: UploadStatus): boolean =>
-    status === "UPLOADING_STAGE_1";
+export const isPresignedGenerated = (status: UploadStatus): boolean =>
+    status === "PRESIGNED_GENERATED";
 
 /**
- * Check if upload is in stage 2 (OpenAI upload)
+ * Check if client is uploading to S3
  */
-export const isUploadingToOpenAI = (status: UploadStatus): boolean =>
-    status === "UPLOADING_STAGE_2";
+export const isClientUploading = (status: UploadStatus): boolean =>
+    status === "CLIENT_UPLOADING";
+
+/**
+ * Check if upload has been confirmed by server
+ */
+export const isUploadConfirmed = (status: UploadStatus): boolean =>
+    status === "UPLOAD_CONFIRMED";
+
+/**
+ * Check if file is being uploaded to AI service
+ */
+export const isAIUploading = (status: UploadStatus): boolean =>
+    status === "AI_UPLOADING";
 
 /**
  * Check if upload is being processed by AI
@@ -134,9 +146,11 @@ export const getProgressForStatus = (
 ): number => {
     const baseProgress = {
         NOT_UPLOADED: 0,
-        UPLOADING_STAGE_1: Math.min(stageProgress, 40), // S3 upload: 0-40%
-        UPLOADING_STAGE_2: 40 + Math.min(stageProgress * 0.3, 30), // OpenAI upload: 40-70%
-        PROCESSING: 70 + Math.min(stageProgress * 0.3, 30), // AI processing: 70-100%
+        PRESIGNED_GENERATED: 5,
+        CLIENT_UPLOADING: 5 + Math.min(stageProgress * 0.4, 40), // 5-45%
+        UPLOAD_CONFIRMED: 45,
+        AI_UPLOADING: 45 + Math.min(stageProgress * 0.15, 15), // 45-60%
+        PROCESSING: 60 + Math.min(stageProgress * 0.4, 40), // 60-100%
         COMPLETED: 100,
         FAILED: 0,
     };

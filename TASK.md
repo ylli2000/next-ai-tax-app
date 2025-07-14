@@ -41,13 +41,13 @@
 - [x] **invoiceSchema.ts**: 发票相关类型 (Invoice, InvoiceStatus, InvoiceCategory) ✅ *发票业务逻辑和验证，支持手动创建和更新*
 - [x] **invoiceTables.ts**: 发票数据表定义 ✅ *双存储架构：S3永久存储+简化数据库模型*
 - [x] **invoiceQueries.ts**: 发票查询类型 ✅ *发票数据查询和筛选*
-- [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *分阶段上传状态、S3存储配置*
+- [x] **uploadSchema.ts**: 文件上传类型 (FileUpload, UploadStatus) ✅ *新8状态枚举、pre-signed URL工作流、进度映射*
 - [x] **aiSchema.ts**: AI处理类型 (AIResponse, ExtractionResult, ValidationResult) ✅ *OpenAI集成和提示管理*
 - [x] **apiSchema.ts**: API响应类型 (ApiResponse, PaginatedResponse, ErrorResponse) ✅ *包含HTTP错误映射函数*
 - [x] **uiSchema.ts**: UI状态类型 (Theme, Language, ToastType) ✅ *UI组件和状态管理*
 - [x] **exportSchema.ts**: 导出相关类型 (ExportFormat, ExportOptions) ✅ *Excel/CSV导出配置*
 - [x] **authSchema.ts**: 认证相关类型 (AuthProvider, SessionData) ✅ *认证系统类型定义*
-- [x] **messageSchema.ts**: 消息和错误类型 (ErrorMessages, SuccessMessages) ✅ *用户友好的错误消息*
+- [x] **messageSchema.ts**: 消息和错误类型 (ErrorMessages, SuccessMessages) ✅ *用户友好的错误消息、pre-signed URL相关消息*
 - [x] **dateSchema.ts**: 日期格式类型 (DateFormat, CommonDateFormat) ✅ *澳洲日期格式标准*
 - [x] **financialSchema.ts**: 财务相关类型 (Currency, TaxConstants) ✅ *多币种支持和澳洲税务*
 - [x] **commonSchemas.ts**: 通用验证类型 (ValidationRules, SystemConstants) ✅ *系统级验证和常量*
@@ -93,7 +93,10 @@
 - [x] **aiUtils.ts**: AI响应处理工具函数 ✅ *OpenAI响应处理、Zod验证、分类建议*
 - [x] **dateUtils.ts**: 日期处理工具函数 ✅ *dayjs集成、时区转换、财年计算*
 - [x] **uploadUtils.ts**: 文件上传处理工具函数 ✅ *双存储架构、分阶段上传、OpenAI临时文件管理*
-- [x] **awsUtils.ts**: AWS S3存储工具函数 ✅ *S3上传/下载、文件生命周期管理、7年归档*
+- [x] **awsUtils.ts**: AWS S3存储工具函数 ✅ *S3上传/下载、pre-signed URL生成、文件生命周期管理、7年归档*
+- [x] **dualStorageUtils.ts**: Pre-signed URL双存储工作流 ✅ *客户端直接上传、会话管理、AI处理一体化*
+- [x] **bulkUploadUtils.ts**: 前端并行上传工具 ✅ *前端多文件界面工具、每个文件独立单文件上传*
+- [x] **uploadStatusUtils.ts**: 上传状态管理工具 ✅ *新状态枚举、进度计算、状态转换验证*
 - [x] **apiCrudUtils.ts**: API CRUD操作工具函数 ✅ *HTTP封装、重试机制、统一错误处理*
 - [x] **apiEndpointUtils.ts**: API端点构建工具函数 ✅ *URL构建、参数处理*
 - [x] **routeUtils.ts**: 路由处理工具函数 ✅ *路径验证、分页、认证检查*
@@ -123,9 +126,10 @@
 > 导入示例：`import { SupportedCurrencyEnum } from '@/schema/financialSchema'`
 
 ### 🌐 2.2 第三方服务集成
-- [ ] **双存储架构集成**: S3永久存储 + OpenAI临时处理
+- [ ] **双存储架构集成**: S3永久存储 + OpenAI临时处理，通过pre-signed URL实现安全文件访问
 - [ ] **文件上传服务**: formidable + sharp 图片优化
 - [ ] **测试双存储工作流**: 上传→处理→清理完整流程
+- [ ] **前端并行上传**: 多个独立的单文件上传，使用dualStorageUtils.ts工作流
 - [ ] **错误处理**: API调用失败处理机制
 
 ### 🗃️ 2.3 数据访问层 (/dal)
@@ -166,14 +170,15 @@
 ### 🎬 3.2 Actions (/actions)
 - [ ] **authActions.ts**: 认证相关操作
 - [ ] **invoiceActions.ts**: 发票操作 (通过API) - 包含手动创建、AI更新合并功能
-- [ ] **uploadActions.ts**: 文件上传操作
+- [ ] **uploadActions.ts**: 文件上传操作（单文件上传，前端并行执行）
 - [ ] **exportActions.ts**: 导出操作
 - [ ] **确保所有Actions通过API访问，不直接访问DAL**
 
 ### 🪝 3.3 自定义Hooks (/hooks)
 - [ ] **useAuth.ts**: 认证状态管理
 - [ ] **useInvoices.ts**: 发票数据管理
-- [ ] **useUpload.ts**: 文件上传管理
+- [ ] **useUpload.ts**: 单文件上传管理（支持前端并行多文件）
+- [ ] **useFileAccess.ts**: pre-signed URL文件访问管理
 - [ ] **useLocalStorage.ts**: 本地存储管理
 - [ ] **useDebounce.ts**: 防抖处理
 - [ ] **useToast.ts**: 消息提示管理
@@ -226,7 +231,7 @@
 - [ ] **登录页**: app/auth/signin/page.tsx
 - [ ] **上传页**: app/upload/page.tsx
 - [ ] **发票列表**: app/invoices/page.tsx
-- [ ] **发票详情**: app/invoices/[id]/page.tsx
+- [ ] **发票详情**: app/invoices/[id]/page.tsx (包含安全的文件预览功能)
 - [ ] **用户设置**: app/settings/page.tsx
 
 ---
@@ -306,6 +311,7 @@
 - [x] **工具函数标准化** ✅ *错误处理统一，日志记录完善，API封装优化*
 - [x] **错误处理体系** ✅ *mapHttpError统一映射，用户友好消息，结构化日志*
 - [x] **文件上传增强** ✅ *渐进式压缩，目标大小控制，详细统计信息*
+- [x] **Pre-signed URL工作流重构** ✅ *客户端直接上传、新状态枚举、会话管理、性能优化*
 
 ### 📦 文件组织
 ```

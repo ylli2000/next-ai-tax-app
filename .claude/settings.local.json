@@ -16,7 +16,8 @@
       "mcp__context7__get-library-docs",
       "Bash(mkdir:*)",
       "Bash(rm:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   }
