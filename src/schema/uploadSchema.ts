@@ -52,14 +52,13 @@ export const AllowedExtensionEnum = [
 export const allowedExtensionSchema = z.enum(AllowedExtensionEnum);
 export type AllowedExtension = z.infer<typeof allowedExtensionSchema>;
 
-// File upload progress status
+// File upload progress status - New simplified 6-state workflow
 export const UploadStatusEnum = [
     "NOT_UPLOADED", // 初始状态：等待开始上传
-    "PRESIGNED_GENERATED", // 已生成预签名URL，等待客户端上传
-    "CLIENT_UPLOADING", // 客户端正在上传到S3
-    "UPLOAD_CONFIRMED", // 服务端已确认S3上传成功
-    "AI_UPLOADING", // 正在上传到OpenAI进行AI处理
-    "PROCESSING", // AI正在分析发票
+    "PROCESSING_PDF", // 客户端PDF转图像处理中
+    "COMPRESSING_IMAGE", // 客户端图像压缩中
+    "UPLOADING_TO_S3", // 上传图像到S3存储
+    "AI_PROCESSING", // OpenAI Vision分析S3图像
     "COMPLETED", // 全流程完成
     "FAILED", // 失败状态
 ] as const;
@@ -80,33 +79,30 @@ export type UploadErrorCode = z.infer<typeof uploadErrorCodeSchema>;
 // Upload status display constants for UI
 export const UPLOAD_STATUS_MESSAGES: Record<UploadStatus, string> = {
     NOT_UPLOADED: "Ready to upload",
-    PRESIGNED_GENERATED: "Upload authorization ready...",
-    CLIENT_UPLOADING: "Uploading to cloud storage...",
-    UPLOAD_CONFIRMED: "Upload confirmed, preparing AI analysis...",
-    AI_UPLOADING: "Uploading for AI processing...",
-    PROCESSING: "AI analyzing your invoice...",
+    PROCESSING_PDF: "Converting PDF to image...",
+    COMPRESSING_IMAGE: "Optimizing image quality...",
+    UPLOADING_TO_S3: "Uploading to cloud storage...",
+    AI_PROCESSING: "AI analyzing your invoice...",
     COMPLETED: "Upload and analysis completed",
     FAILED: "Upload failed",
 } as const;
 
 export const UPLOAD_STATUS_COLORS: Record<UploadStatus, string> = {
     NOT_UPLOADED: "gray",
-    PRESIGNED_GENERATED: "yellow",
-    CLIENT_UPLOADING: "blue",
-    UPLOAD_CONFIRMED: "cyan",
-    AI_UPLOADING: "blue",
-    PROCESSING: "orange",
+    PROCESSING_PDF: "purple",
+    COMPRESSING_IMAGE: "indigo",
+    UPLOADING_TO_S3: "blue",
+    AI_PROCESSING: "orange",
     COMPLETED: "green",
     FAILED: "red",
 } as const;
 
 export const UPLOAD_STATUS_ICONS: Record<UploadStatus, string> = {
     NOT_UPLOADED: "upload",
-    PRESIGNED_GENERATED: "key",
-    CLIENT_UPLOADING: "loading",
-    UPLOAD_CONFIRMED: "check-circle",
-    AI_UPLOADING: "loading",
-    PROCESSING: "cog",
+    PROCESSING_PDF: "file-text",
+    COMPRESSING_IMAGE: "image",
+    UPLOADING_TO_S3: "loading",
+    AI_PROCESSING: "cog",
     COMPLETED: "check",
     FAILED: "x",
 } as const;
@@ -136,7 +132,10 @@ export const UPLOAD_CONSTANTS = {
 
     // File size limit (from SYSTEM_DEFAULT)
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB - Used in uploadUtils.ts for file size validation
+    TARGET_COMPRESSED_FILE_SIZE_IN_BYTES: 1 * 1024 * 1024, // 1MB - Used in uploadUtils.ts for file size validation
 
+    // PDF processing limits
+    MAX_READ_PDF_PAGES: 3, // Maximum pages to read from PDF for long image creation
     // Filename length limit
     MAX_FILENAME_LENGTH: FILE_SIZE_CONSTANTS.MAX_FILENAME_LENGTH, // Used in uploadUtils.ts for filename validation
 
@@ -161,12 +160,16 @@ export const UPLOAD_CONSTANTS = {
 
 // Upload status transitions matrix for validation
 export const VALID_STATUS_TRANSITIONS: Record<UploadStatus, UploadStatus[]> = {
-    NOT_UPLOADED: ["PRESIGNED_GENERATED", "FAILED"],
-    PRESIGNED_GENERATED: ["CLIENT_UPLOADING", "FAILED"],
-    CLIENT_UPLOADING: ["UPLOAD_CONFIRMED", "FAILED"],
-    UPLOAD_CONFIRMED: ["AI_UPLOADING", "FAILED"],
-    AI_UPLOADING: ["PROCESSING", "FAILED"],
-    PROCESSING: ["COMPLETED", "FAILED"],
+    NOT_UPLOADED: [
+        "PROCESSING_PDF",
+        "COMPRESSING_IMAGE",
+        "UPLOADING_TO_S3",
+        "FAILED",
+    ], // PDF files go through PDF processing, images skip to compression or upload
+    PROCESSING_PDF: ["COMPRESSING_IMAGE", "FAILED"],
+    COMPRESSING_IMAGE: ["UPLOADING_TO_S3", "FAILED"],
+    UPLOADING_TO_S3: ["AI_PROCESSING", "FAILED"],
+    AI_PROCESSING: ["COMPLETED", "FAILED"],
     COMPLETED: [], // Terminal state
     FAILED: ["NOT_UPLOADED"], // Can retry
 } as const;

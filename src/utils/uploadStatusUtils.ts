@@ -77,39 +77,34 @@ export const isUploadIdle = (status: UploadStatus): boolean =>
  * Check if upload is currently processing
  */
 export const isUploadProcessing = (status: UploadStatus): boolean =>
-    status === "CLIENT_UPLOADING" ||
-    status === "AI_UPLOADING" ||
-    status === "PROCESSING";
+    status === "PROCESSING_PDF" ||
+    status === "COMPRESSING_IMAGE" ||
+    status === "UPLOADING_TO_S3" ||
+    status === "AI_PROCESSING";
 
 /**
- * Check if pre-signed URL has been generated
+ * Check if PDF is being processed
  */
-export const isPresignedGenerated = (status: UploadStatus): boolean =>
-    status === "PRESIGNED_GENERATED";
+export const isProcessingPdf = (status: UploadStatus): boolean =>
+    status === "PROCESSING_PDF";
 
 /**
- * Check if client is uploading to S3
+ * Check if image is being compressed
  */
-export const isClientUploading = (status: UploadStatus): boolean =>
-    status === "CLIENT_UPLOADING";
+export const isCompressingImage = (status: UploadStatus): boolean =>
+    status === "COMPRESSING_IMAGE";
 
 /**
- * Check if upload has been confirmed by server
+ * Check if file is uploading to S3
  */
-export const isUploadConfirmed = (status: UploadStatus): boolean =>
-    status === "UPLOAD_CONFIRMED";
-
-/**
- * Check if file is being uploaded to AI service
- */
-export const isAIUploading = (status: UploadStatus): boolean =>
-    status === "AI_UPLOADING";
+export const isUploadingToS3 = (status: UploadStatus): boolean =>
+    status === "UPLOADING_TO_S3";
 
 /**
  * Check if upload is being processed by AI
  */
 export const isAIProcessing = (status: UploadStatus): boolean =>
-    status === "PROCESSING";
+    status === "AI_PROCESSING";
 
 /**
  * Check if upload completed successfully
@@ -146,11 +141,10 @@ export const getProgressForStatus = (
 ): number => {
     const baseProgress = {
         NOT_UPLOADED: 0,
-        PRESIGNED_GENERATED: 5,
-        CLIENT_UPLOADING: 5 + Math.min(stageProgress * 0.4, 40), // 5-45%
-        UPLOAD_CONFIRMED: 45,
-        AI_UPLOADING: 45 + Math.min(stageProgress * 0.15, 15), // 45-60%
-        PROCESSING: 60 + Math.min(stageProgress * 0.4, 40), // 60-100%
+        PROCESSING_PDF: 0 + Math.min(stageProgress * 0.2, 20), // 0-20%
+        COMPRESSING_IMAGE: 20 + Math.min(stageProgress * 0.15, 15), // 20-35%
+        UPLOADING_TO_S3: 35 + Math.min(stageProgress * 0.35, 35), // 35-70%
+        AI_PROCESSING: 70 + Math.min(stageProgress * 0.3, 30), // 70-100%
         COMPLETED: 100,
         FAILED: 0,
     };
@@ -169,6 +163,10 @@ export const calculateBulkProgress = (
     failedCount: number;
     processingCount: number;
     idleCount: number;
+    pdfProcessingCount: number;
+    imageProcessingCount: number;
+    uploadingCount: number;
+    aiProcessingCount: number;
 } => {
     if (progresses.length === 0) {
         return {
@@ -177,6 +175,10 @@ export const calculateBulkProgress = (
             failedCount: 0,
             processingCount: 0,
             idleCount: 0,
+            pdfProcessingCount: 0,
+            imageProcessingCount: 0,
+            uploadingCount: 0,
+            aiProcessingCount: 0,
         };
     }
 
@@ -194,12 +196,30 @@ export const calculateBulkProgress = (
     ).length;
     const idleCount = progresses.filter((p) => isUploadIdle(p.status)).length;
 
+    // New detailed status counts
+    const pdfProcessingCount = progresses.filter((p) =>
+        isProcessingPdf(p.status),
+    ).length;
+    const imageProcessingCount = progresses.filter((p) =>
+        isCompressingImage(p.status),
+    ).length;
+    const uploadingCount = progresses.filter((p) =>
+        isUploadingToS3(p.status),
+    ).length;
+    const aiProcessingCount = progresses.filter((p) =>
+        isAIProcessing(p.status),
+    ).length;
+
     return {
         overallProgress,
         completedCount,
         failedCount,
         processingCount,
         idleCount,
+        pdfProcessingCount,
+        imageProcessingCount,
+        uploadingCount,
+        aiProcessingCount,
     };
 };
 

@@ -31,15 +31,15 @@ import { logInfo, logError } from "./logUtils";
 // ===== Processing and Cleanup =====
 
 /**
- * Process file with OpenAI for invoice data extraction
- * Uses OpenAI Vision API to analyze invoice images and extract structured data
+ * Process image with OpenAI Vision for invoice data extraction
+ * Uses OpenAI Vision API to analyze invoice images directly from S3 URL
  */
-export const processWithOpenAI = async (
-    openaiFileId: string,
+export const processWithOpenAIVision = async (
+    s3ImageUrl: string,
     onProgressUpdate?: (status: UploadStatus, progress: number) => void,
 ): Promise<ExtractedInvoiceData> => {
     try {
-        onProgressUpdate?.("PROCESSING", 10);
+        onProgressUpdate?.("AI_PROCESSING", 10);
 
         // Initialize OpenAI client
         const openai = new OpenAI({
@@ -47,7 +47,7 @@ export const processWithOpenAI = async (
             organization: env.OPENAI_ORGANIZATION_ID,
         });
 
-        onProgressUpdate?.("PROCESSING", 30);
+        onProgressUpdate?.("AI_PROCESSING", 30);
 
         // Create chat completion with vision for invoice analysis
         const response = await openai.chat.completions.create({
@@ -69,7 +69,7 @@ export const processWithOpenAI = async (
                         {
                             type: "image_url",
                             image_url: {
-                                url: `https://files.openai.com/files/${openaiFileId}`,
+                                url: s3ImageUrl, // Direct S3 pre-signed download URL
                             },
                         },
                     ],
@@ -77,7 +77,7 @@ export const processWithOpenAI = async (
             ],
         });
 
-        onProgressUpdate?.("PROCESSING", 70);
+        onProgressUpdate?.("AI_PROCESSING", 70);
 
         // Parse OpenAI response
         const responseText = response.choices[0]?.message?.content;
@@ -85,7 +85,7 @@ export const processWithOpenAI = async (
             throw new Error("No response from OpenAI");
         }
 
-        onProgressUpdate?.("PROCESSING", 85);
+        onProgressUpdate?.("AI_PROCESSING", 85);
 
         // Extract JSON from response (handle potential markdown formatting)
         let jsonData;
@@ -102,13 +102,13 @@ export const processWithOpenAI = async (
             throw new Error(ERROR_MESSAGES.INVALID_AI_RESPONSE_FORMAT);
         }
 
-        onProgressUpdate?.("PROCESSING", 95);
+        onProgressUpdate?.("AI_PROCESSING", 95);
 
         // Validate and transform the response using our schema
         const validatedData = extractedInvoiceDataSchema.parse(jsonData);
 
-        logInfo("OpenAI processing completed successfully", {
-            openaiFileId,
+        logInfo("OpenAI Vision processing completed successfully", {
+            s3ImageUrl: s3ImageUrl.split("?")[0], // Log URL without query params for privacy
             invoiceNumber: validatedData.invoiceNumber,
             supplierName: validatedData.supplierName,
             totalAmount: validatedData.totalAmount,
@@ -116,11 +116,14 @@ export const processWithOpenAI = async (
             categoryConfidence: validatedData.categoryConfidence,
         });
 
-        onProgressUpdate?.("PROCESSING", 100);
+        onProgressUpdate?.("AI_PROCESSING", 100);
 
         return validatedData;
     } catch (error) {
-        logError("OpenAI processing failed", { error, openaiFileId });
+        logError("OpenAI Vision processing failed", {
+            error,
+            s3ImageUrl: s3ImageUrl.split("?")[0], // Log URL without query params for privacy
+        });
         const { message } = mapOpenAIError(error);
         throw new Error(message, { cause: error });
     }

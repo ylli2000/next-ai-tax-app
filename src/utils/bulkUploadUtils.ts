@@ -8,6 +8,10 @@ import {
     isUploadFailed,
     isUploadProcessing,
     isUploadIdle,
+    isProcessingPdf,
+    isCompressingImage,
+    isUploadingToS3,
+    isAIProcessing,
 } from "./uploadStatusUtils";
 import { formatFileSize } from "./formatUtils";
 import { validateFiles } from "./fileUtils";
@@ -17,18 +21,18 @@ import { validateFiles } from "./fileUtils";
  *
  * ⚠️ 重要说明：
  * 这些工具函数用于前端多文件上传界面的显示和管理。
- * 实际的上传流程：每个文件都是独立的单文件上传，使用 dualStorageUtils.ts 的工作流。
+ * 实际的上传流程：每个文件都是独立的单文件上传，使用 clientUploadUtils.ts 的新工作流。
  *
  * 前端"批量上传" = 多个独立的单文件上传并行执行
- * - 每个文件有独立的上传状态和进度
- * - 每个文件使用独立的 pre-signed URL
+ * - 每个文件有独立的上传状态和进度（6状态枚举）
+ * - 每个文件直接上传到S3（无需OpenAI Files中转）
  * - 失败的文件不影响其他文件
  * - 前端组件负责协调多个并行上传的显示
  *
- * 工作流程：
+ * 新工作流程：
  * 1. 用户选择多个文件
  * 2. 前端使用这些工具函数验证和组织文件
- * 3. 前端并行执行多个独立的单文件上传（每个都调用 dualStorageUtils 工作流）
+ * 3. 前端并行执行多个独立的单文件上传（每个都调用 clientUploadUtils 工作流）
  * 4. 前端使用这些工具函数汇总和显示整体进度
  */
 
@@ -98,7 +102,7 @@ export const groupFilesByType = (files: File[]): Record<string, File[]> => {
  * 前端工具：准备多文件上传
  *
  * 注意：这只是前端的文件验证和统计，实际上传时每个文件都是独立的单文件上传流程
- * 使用 dualStorageUtils.ts 的 initiateDualStorageWorkflow + confirmUploadAndProcessAI
+ * 使用 clientUploadUtils.ts 的 handleFileUpload 函数进行完整的客户端协调上传
  */
 export const prepareBulkUpload = (
     files: File[],
@@ -169,6 +173,10 @@ export const calculateOverallProgress = (
     failedCount: number;
     processingCount: number;
     idleCount: number;
+    pdfProcessingCount: number;
+    imageProcessingCount: number;
+    uploadingCount: number;
+    aiProcessingCount: number;
 } => {
     const totalProgress = progresses.reduce(
         (sum, progress) => sum + progress.progress,
@@ -188,12 +196,30 @@ export const calculateOverallProgress = (
     ).length;
     const idleCount = progresses.filter((p) => isUploadIdle(p.status)).length;
 
+    // New detailed status counts for 6-state workflow
+    const pdfProcessingCount = progresses.filter((p) =>
+        isProcessingPdf(p.status),
+    ).length;
+    const imageProcessingCount = progresses.filter((p) =>
+        isCompressingImage(p.status),
+    ).length;
+    const uploadingCount = progresses.filter((p) =>
+        isUploadingToS3(p.status),
+    ).length;
+    const aiProcessingCount = progresses.filter((p) =>
+        isAIProcessing(p.status),
+    ).length;
+
     return {
         overallProgress,
         completedCount,
         failedCount,
         processingCount,
         idleCount,
+        pdfProcessingCount,
+        imageProcessingCount,
+        uploadingCount,
+        aiProcessingCount,
     };
 };
 
@@ -271,76 +297,63 @@ export const aggregateUploadErrors = (
 /**
  * 前端并行上传工作流示例
  *
- * 这个示例展示了如何在前端使用这些工具函数配合 dualStorageUtils.ts 实现多文件上传：
+ * 这个示例展示了如何在前端使用这些工具函数配合 clientUploadUtils.ts 实现多文件上传：
  *
  * ```typescript
- * import { initiateDualStorageWorkflow, confirmUploadAndProcessAI } from './dualStorageUtils';
+ * import { handleFileUpload, handleBatchFileUpload } from './clientUploadUtils';
  *
  * const uploadMultipleFiles = async (files: File[], userId: string) => {
  *   // 1. 前端验证和准备
  *   const { validFiles, invalidFiles } = prepareBulkUpload(files);
  *
- *   // 2. 为每个文件创建进度对象
- *   const progresses = validFiles.map(file =>
- *     createUploadProgress(`${file.name}-${Date.now()}`)
+ *   // 2. 使用新的批量上传函数（每个文件独立的完整工作流）
+ *   const batchResult = await handleBatchFileUpload(
+ *     validFiles,
+ *     userId,
+ *     (fileIndex, status, progress, message) => {
+ *       // 更新单个文件的进度显示
+ *       updateFileProgress(fileIndex, status, progress, message);
+ *     },
+ *     (completed, total) => {
+ *       // 更新整体进度显示
+ *       updateOverallProgress(completed, total);
+ *     }
  *   );
  *
- *   // 3. 并行执行独立的单文件上传
- *   const uploadPromises = validFiles.map(async (file, index) => {
- *     try {
- *       // 每个文件都是完整的单文件上传流程
+ *   // 3. 处理结果
+ *   const { results, successCount, failureCount } = batchResult;
  *
- *       // 步骤1: 初始化上传会话
- *       const initResult = await initiateDualStorageWorkflow(
+ *   // 4. 显示最终结果
+ *   console.log(`Upload completed: ${successCount} success, ${failureCount} failed`);
+ *
+ *   return batchResult;
+ * };
+ *
+ * // 或者手动控制每个文件的上传
+ * const uploadFilesManually = async (files: File[], userId: string) => {
+ *   const results = [];
+ *
+ *   for (const [index, file] of files.entries()) {
+ *     try {
+ *       const result = await handleFileUpload(
  *         file,
  *         userId,
- *         (status, progress) => {
- *           progresses[index] = { ...progresses[index], status, progress };
- *           updateUI(); // 更新前端显示
+ *         (status, progress, message) => {
+ *           updateFileProgress(index, status, progress, message);
  *         }
  *       );
- *
- *       // 步骤2: 前端直接上传到S3
- *       await uploadFileToS3(file, initResult.presignedUploadUrl);
- *
- *       // 步骤3: 确认上传并AI处理
- *       const confirmResult = await confirmUploadAndProcessAI(
- *         initResult.uploadSessionId,
- *         (status, progress) => {
- *           progresses[index] = { ...progresses[index], status, progress };
- *           updateUI(); // 更新前端显示
- *         }
- *       );
- *
- *       return confirmResult;
+ *       results.push(result);
  *     } catch (error) {
- *       const uploadError = handleUploadError(error);
- *       progresses[index] = {
- *         ...progresses[index],
- *         status: 'FAILED',
- *         error: uploadError.message
- *       };
- *       updateUI();
- *       throw uploadError;
+ *       results.push({ success: false, error: error.message });
  *     }
- *   });
+ *   }
  *
- *   // 4. 等待所有上传完成（允许部分失败）
- *   const results = await Promise.allSettled(uploadPromises);
- *
- *   // 5. 汇总结果
- *   const overallProgress = calculateOverallProgress(progresses);
- *   const errors = results
- *     .filter(r => r.status === 'rejected')
- *     .map(r => handleUploadError(r.reason));
- *   const errorSummary = aggregateUploadErrors(errors);
- *
- *   return { overallProgress, errors, errorSummary };
+ *   return results;
  * };
  * ```
  */
 export const FRONTEND_PARALLEL_UPLOAD_EXAMPLE = {
     description:
         "See the comment above for frontend parallel upload workflow example",
-    note: "Each file uses the complete single-file upload workflow from dualStorageUtils.ts",
+    note: "Each file uses the complete single-file upload workflow from clientUploadUtils.ts with 6-state progress tracking",
 } as const;

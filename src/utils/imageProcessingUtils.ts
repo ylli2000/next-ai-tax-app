@@ -31,7 +31,7 @@ interface CompressionResult {
  *
  * Smart sizing algorithm:
  * 1. First applies max width/height constraints while preserving aspect ratio
- * 2. For small target sizes (<500KB), pre-reduces dimensions to prevent excessive quality loss
+ * 2. For small target sizes (<50% of default), pre-reduces dimensions to prevent excessive quality loss
  * 3. Uses square root scaling to balance dimension reduction with quality preservation
  *
  * Why square root scaling?
@@ -55,11 +55,17 @@ const calculateOptimalDimensions = (
     );
 
     // If target size is small, reduce dimensions further
-    if (targetSizeBytes && targetSizeBytes < 500 * 1024) {
-        // 500KB threshold - below this, pre-reduce dimensions
-        const sizeFactor = Math.sqrt(targetSizeBytes / (500 * 1024));
-        width = Math.floor(width * sizeFactor);
-        height = Math.floor(height * sizeFactor);
+    if (targetSizeBytes) {
+        // Use 50% of configured target size as threshold for dimension reduction
+        const dimensionReductionThreshold =
+            UPLOAD_CONSTANTS.TARGET_COMPRESSED_FILE_SIZE_IN_BYTES * 0.5;
+        if (targetSizeBytes < dimensionReductionThreshold) {
+            const sizeFactor = Math.sqrt(
+                targetSizeBytes / dimensionReductionThreshold,
+            );
+            width = Math.floor(width * sizeFactor);
+            height = Math.floor(height * sizeFactor);
+        }
     }
 
     return { width, height };
@@ -114,12 +120,13 @@ const calculateAspectRatioFit = (
  * Usage Examples:
  * ```typescript
  * // Basic compression with size limit
- * const result = await compressImage(file, 500 * 1024); // 500KB target
+ * const result = await compressImage(file, {targetSizeBytes: 500 * 1024}); // 500KB target
  * console.log(`Reduced from ${result.originalSize} to ${result.compressedSize} bytes`);
  * console.log(`Compression ratio: ${result.compressionRatio}%`);
  *
  * // Custom compression settings
- * const result = await compressImage(file, 200 * 1024, {
+ * const result = await compressImage(file, {
+ *   targetSizeBytes: 200 * 1024,
  *   maxWidth: 1200,
  *   maxHeight: 800,
  *   quality: 0.9,
@@ -135,8 +142,8 @@ const calculateAspectRatioFit = (
  */
 export const compressImage = async (
     file: File,
-    targetSizeBytes?: number,
     options: {
+        targetSizeBytes?: number;
         maxWidth?: number;
         maxHeight?: number;
         quality?: number;
@@ -172,7 +179,7 @@ export const compressImage = async (
                 img.height,
                 maxWidth,
                 maxHeight,
-                targetSizeBytes,
+                options.targetSizeBytes,
             );
 
             canvas.width = width;
@@ -198,8 +205,8 @@ export const compressImage = async (
 
                     // Check if target size is met or max attempts reached
                     if (
-                        !targetSizeBytes ||
-                        blob.size <= targetSizeBytes ||
+                        !options.targetSizeBytes ||
+                        blob.size <= options.targetSizeBytes ||
                         currentAttempt >= maxAttempts
                     ) {
                         const compressedFile = new File([blob], file.name, {
@@ -234,6 +241,57 @@ export const compressImage = async (
             reject(new Error(ERROR_MESSAGES.FAILED_TO_LOAD_IMAGE));
         img.src = URL.createObjectURL(file);
     });
+};
+
+/**
+ * Standardized image compression interface for client upload workflow
+ * Provides consistent return format expected by upload utilities
+ */
+export const compressImageWithStandardInterface = async (
+    file: File,
+    options: {
+        targetSizeBytes?: number;
+        maxWidth?: number;
+        maxHeight?: number;
+        quality?: number;
+        outputFormat?: string;
+        maxAttempts?: number;
+    } = {},
+): Promise<{
+    success: boolean;
+    compressedFile?: File;
+    error?: string;
+    compressionStats?: {
+        originalSize: number;
+        compressedSize: number;
+        compressionRatio: number;
+        attempts: number;
+        finalQuality: number;
+    };
+}> => {
+    try {
+        const compressionResult = await compressImage(file, options);
+
+        return {
+            success: true,
+            compressedFile: compressionResult.file,
+            compressionStats: {
+                originalSize: compressionResult.originalSize,
+                compressedSize: compressionResult.compressedSize,
+                compressionRatio: compressionResult.compressionRatio,
+                attempts: compressionResult.attempts,
+                finalQuality: compressionResult.finalQuality,
+            },
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error:
+                error instanceof Error
+                    ? error.message
+                    : "Image compression failed",
+        };
+    }
 };
 
 // ===== Preview Generation =====

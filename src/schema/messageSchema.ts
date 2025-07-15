@@ -42,12 +42,14 @@ export const SUCCESS_MESSAGES = {
     USER_UPDATED_SUCCESSFULLY: "User updated successfully!",
     USER_DELETED_SUCCESSFULLY: "User deleted successfully!",
     USER_PROFILE_UPDATED_SUCCESSFULLY: "User profile updated successfully!",
-    PRESIGNED_URL_GENERATED: "Upload authorization generated successfully!",
-    CLIENT_UPLOAD_STARTED: "Starting file upload to cloud storage...",
-    CLIENT_UPLOAD_COMPLETED: "File uploaded to cloud storage successfully!",
-    UPLOAD_CONFIRMED: "Upload confirmed, starting AI analysis...",
-    AI_UPLOAD_STARTED: "Uploading file for AI processing...",
-    AI_UPLOAD_COMPLETED: "File ready for AI analysis...",
+    PDF_PROCESSING_STARTED: "Converting PDF to image format...",
+    PDF_PROCESSING_COMPLETED: "PDF converted to image successfully!",
+    IMAGE_COMPRESSION_STARTED: "Optimizing image quality...",
+    IMAGE_COMPRESSION_COMPLETED: "Image optimized successfully!",
+    S3_UPLOAD_STARTED: "Starting upload to cloud storage...",
+    S3_UPLOAD_COMPLETED: "File uploaded to cloud storage successfully!",
+    AI_VISION_STARTED: "AI analyzing your invoice...",
+    AI_VISION_COMPLETED: "Invoice analysis completed successfully!",
 } as const;
 
 export const SuccessMessageKeysEnum = Object.keys(SUCCESS_MESSAGES) as [
@@ -182,20 +184,30 @@ export const ERROR_MESSAGES = {
     S3_DOWNLOAD_FAILED: "Failed to download file from cloud storage",
     S3_DELETE_FAILED: "Failed to delete file from cloud storage",
     S3_METADATA_FAILED: "Failed to get file information from cloud storage",
+    S3_FILE_NOT_CONFIRMED: "File upload not confirmed",
+    UPLOAD_CONFIRMATION_FAILED: "Failed to confirm file upload",
 
-    // Pre-signed URL and upload session errors
-    PRESIGNED_URL_GENERATION_FAILED:
-        "Failed to generate upload authorization. Please try again",
-    CLIENT_UPLOAD_FAILED:
-        "Failed to upload to cloud storage. Please check your connection",
-    CLIENT_UPLOAD_TIMEOUT: "Upload timed out. Please try again",
-    UPLOAD_CONFIRMATION_FAILED: "Failed to confirm upload. Please try again",
-    UPLOAD_SESSION_EXPIRED: "Upload session expired. Please start over",
-    UPLOAD_SESSION_NOT_FOUND:
-        "Upload session not found. Please restart the upload",
-    S3_FILE_NOT_CONFIRMED:
-        "File not found in cloud storage. Please try uploading again",
-    AI_UPLOAD_PREPARATION_FAILED: "Failed to prepare file for AI analysis",
+    // PDF processing errors
+    PDF_PROCESSING_FAILED:
+        "Failed to convert PDF to image. Please ensure it's a valid PDF file",
+    PDF_LOAD_FAILED:
+        "Could not load PDF file. Please check if the file is corrupted",
+    PDF_RENDER_FAILED:
+        "Failed to render PDF page. Please try with a different PDF",
+    PDF_UNSUPPORTED_VERSION:
+        "This PDF version is not supported. Please use a standard PDF format",
+
+    // Image processing errors
+    IMAGE_COMPRESSION_FAILED:
+        "Failed to optimize image. Please try with a different image",
+    IMAGE_LOAD_FAILED:
+        "Could not load image file. Please check if the file is valid",
+    IMAGE_TOO_LARGE_FOR_PROCESSING:
+        "Image is too large to process. Please use a smaller image",
+
+    // S3 upload errors (simplified)
+    S3_DIRECT_UPLOAD_FAILED:
+        "Failed to upload to cloud storage. Please check your connection and try again",
 
     // Export errors
     EXPORT_FAILED: "Export failed. Please try again",
