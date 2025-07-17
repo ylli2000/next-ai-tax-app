@@ -112,6 +112,7 @@
 - **`invoiceSchema.ts`** - 发票业务逻辑和验证 // (使用者：发票服务、DAL、API)
 - **`invoiceTables.ts`** - 发票数据库表定义 // (使用者：Drizzle ORM、DAL操作)
 - **`messageSchema.ts`** - 错误消息和用户通信 // (使用者：所有层级、错误处理)
+- **`pdfSchema.ts`** - PDF处理类型、Zod验证模式和常量 // (使用者：PDF服务、文件处理、上传工作流)
 - **`routeSchema.ts`** - 应用路由和导航类型 // (使用者：路由工具、中间件)
 - **`uiSchema.ts`** - UI状态和组件类型 // (使用者：组件、状态管理)
 - **`uploadSchema.ts`** - 文件上传类型和处理状态 // (使用者：上传服务、文件处理)
