@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { users } from "@/schema/userTables";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Deletes a user and their associated profile

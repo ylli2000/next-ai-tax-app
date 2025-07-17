@@ -5,9 +5,9 @@ import {
     insertUserSchema,
     insertUserProfileSchema,
 } from "@/schema/userQueries";
-import { getDefaultUserProfile } from "@/utils/authUtils";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { getDefaultUserProfile } from "@/utils/core/auth";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Creates a new user with default profile

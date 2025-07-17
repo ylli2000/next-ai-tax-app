@@ -1,14 +1,19 @@
-import { UPLOAD_CONSTANTS, type UploadStatus } from "@/schema/uploadSchema";
+import {
+    IMAGE_COMPRESSION,
+    UPLOAD_CONSTANTS,
+    type UploadStatus,
+} from "@/schema/uploadSchema";
+import { PDF_PROCESSING } from "@/schema/pdfSchema";
 import { type ExtractedInvoiceData } from "@/schema/aiSchema";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/schema/messageSchema";
-import { logError, logInfo } from "./logUtils";
-import { validateFile } from "./fileUtils";
-import { compressImageWithStandardInterface } from "./imageProcessingUtils";
+import { logError, logInfo } from "@/utils/sys/log";
+import { validateFile } from "@/utils/core/file";
+import { compressImageWithStandardInterface } from "@/services/file/image";
 import {
     smartPdfProcessing,
     shouldProcessAsPdf,
     supportsPdfProcessing,
-} from "./pdfProcessingUtils";
+} from "@/services/file/pdf";
 
 /**
  * Client-side upload coordination utilities
@@ -76,7 +81,7 @@ export const handleFileUpload = async (
                 SUCCESS_MESSAGES.PDF_PROCESSING_STARTED,
             );
 
-            const { maxPages = UPLOAD_CONSTANTS.MAX_READ_PDF_PAGES } = options;
+            const { maxPages = PDF_PROCESSING.MAX_READ_PDF_PAGES } = options;
 
             const pdfResult = await smartPdfProcessing(file, {
                 maxPages,
@@ -143,18 +148,17 @@ export const handleFileUpload = async (
             : UPLOAD_CONSTANTS.TARGET_COMPRESSED_FILE_SIZE_IN_BYTES;
 
         const maxHeight = isLongImage
-            ? UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT * pageCount
-            : UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT;
+            ? IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT * pageCount
+            : IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT;
 
         const compressionResult = await compressImageWithStandardInterface(
             processedFile,
             {
                 targetSizeBytes,
-                maxWidth: UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_WIDTH,
+                maxWidth: IMAGE_COMPRESSION.DEFAULT_MAX_WIDTH,
                 maxHeight,
-                quality: UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_QUALITY,
-                outputFormat:
-                    UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_OUTPUT_FORMAT,
+                quality: IMAGE_COMPRESSION.DEFAULT_QUALITY,
+                outputFormat: IMAGE_COMPRESSION.DEFAULT_OUTPUT_FORMAT,
             },
         );
 

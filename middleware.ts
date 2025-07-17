@@ -2,8 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { ROUTES } from "@/schema/routeSchema";
-import { isProtectedRoute, isPublicRoute } from "@/utils/routeUtils";
-import { logDebug } from "@/utils/logUtils";
+import { isProtectedRoute, isPublicRoute } from "@/utils/core/route";
+import { logDebug } from "@/utils/sys/log";
 /**
  * NextAuth.js middleware for route protection
  * Official docs: https://next-auth.js.org/configuration/nextjs#middleware

@@ -42,7 +42,7 @@ Credentials({
         });
         if (!user || !user.password) return null;
 
-        // 3. 验证密码 (复用authUtils.ts)
+        // 3. 验证密码 (复用utils/core/auth.ts)
         const isValidPassword = await verifyPassword(
             validation.data.password, 
             user.password
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
         redirect(ROUTES.AUTH.SIGNIN);
     }
     
-    // 权限检查 (复用现有authUtils.ts)
+    // 权限检查 (复用现有utils/core/auth.ts)
     const canManage = canManageUsers(session.user.role);
     
     return (
@@ -268,7 +268,7 @@ interface UserSession {
 
 #### 权限分级系统
 ```typescript
-// 权限层级 (复用现有authUtils.ts)
+// 权限层级 (复用现有utils/core/auth.ts)
 const roleHierarchy = {
     USER: 0,        // 普通用户：管理自己的发票
     ACCOUNTANT: 1,  // 会计师：管理分配的客户

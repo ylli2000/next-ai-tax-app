@@ -5,7 +5,7 @@ import { ERROR_MESSAGES } from "@/schema/messageSchema";
 import { ROUTES } from "@/schema/routeSchema";
 import { type UserRole } from "@/schema/userSchema";
 import { type User, type UserProfile } from "@/schema/userTables";
-import { buildUrl } from "./routeUtils";
+import { buildUrl } from "@/utils/core/route";
 
 /**
  * Authentication utility functions

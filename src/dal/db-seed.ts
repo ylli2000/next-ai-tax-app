@@ -6,9 +6,9 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { USER_CONSTANTS } from "@/schema/userSchema";
 import { UI_CONSTANTS } from "@/schema/uiSchema";
-import { logError, logInfo } from "@/utils/logUtils";
+import { logError, logInfo } from "@/utils/sys/log";
 import { userProfiles, users } from "../schema/userTables";
-import { env } from "../utils/envUtils"; //THIS IS SEPARATE FROM THE db.ts FILE, SEED IS INDEPENDENT
+import { env } from "../utils/sys/env"; //THIS IS SEPARATE FROM THE db.ts FILE, SEED IS INDEPENDENT
 import * as invoiceTables from "../schema/invoiceTables";
 import * as userTables from "../schema/userTables";
 

@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { ERROR_MESSAGES, ErrorMessageValuesSchema } from "./messageSchema";
+import {
+    ERROR_MESSAGES,
+    ErrorMessageKey,
+    ErrorMessageKeysSchema,
+    SUCCESS_MESSAGES,
+} from "./messageSchema";
 
 /**
  * API-related schemas using Zod for runtime validation and type inference
@@ -143,7 +148,7 @@ export const createApiResponseSchema = <T extends z.ZodTypeAny>(
     z.object({
         success: z.boolean(),
         data: dataSchema.optional(),
-        error: ErrorMessageValuesSchema.optional(), // Error code from messageSchema (e.g., 'RECORD_NOT_FOUND', 'SERVER_ERROR')
+        error: ErrorMessageKeysSchema.optional(), // Error code from messageSchema (e.g., 'RECORD_NOT_FOUND', 'SERVER_ERROR')
         message: z.string().optional(), // User-friendly error message (e.g., 'Record not found')
         statusCode: z.number().optional(),
         timestamp: z.string().datetime().optional(),
@@ -155,14 +160,23 @@ export type ApiResponse<T extends z.ZodTypeAny> = z.infer<
 /**
  * Create standardized API response with default values
  */
-export const defaultApiResponse = () => ({
-    success: false,
-    data: undefined,
-    error: undefined,
-    message: undefined,
-    statusCode: undefined,
-    timestamp: new Date().toISOString(),
-});
+export const defaultApiResponse = <T extends z.ZodTypeAny>(): ApiResponse<T> =>
+    ({
+        success: true,
+        data: undefined,
+        message: SUCCESS_MESSAGES.SUCCESS,
+        statusCode: 200,
+        timestamp: new Date().toISOString(),
+    }) as ApiResponse<T>;
+
+export const defaultApiError = <T extends z.ZodTypeAny>(): ApiResponse<T> =>
+    ({
+        success: false,
+        error: "SERVER_ERROR" as ErrorMessageKey,
+        message: ERROR_MESSAGES.SERVER_ERROR,
+        statusCode: 500,
+        timestamp: new Date().toISOString(),
+    }) as ApiResponse<T>;
 
 // API Endpoint Schema
 export const apiEndpointSchema = z.object({

@@ -2,7 +2,7 @@ import { desc, eq } from "drizzle-orm";
 import { invoices, invoiceFiles } from "@/schema/invoiceTables";
 import { type InvoiceCategory } from "@/schema/invoiceSchema";
 import { type InvoiceWithFile } from "@/schema/invoiceQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Retrieves all invoices in a specific category

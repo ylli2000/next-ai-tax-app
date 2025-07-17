@@ -2,7 +2,7 @@ import { count, isNotNull, gte } from "drizzle-orm";
 import { users } from "@/schema/userTables";
 import { type UserStats } from "@/schema/userQueries";
 import { AUTH_CONSTANTS } from "@/schema/authSchema";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Generates comprehensive user statistics and analytics

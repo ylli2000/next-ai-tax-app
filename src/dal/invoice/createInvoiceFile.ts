@@ -1,7 +1,7 @@
 import { invoiceFiles, type InvoiceFile } from "@/schema/invoiceTables";
 import { insertInvoiceFileSchema } from "@/schema/invoiceQueries";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Creates a new invoice file record in the database

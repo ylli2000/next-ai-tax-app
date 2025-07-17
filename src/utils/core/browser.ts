@@ -1,6 +1,6 @@
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
 import { UPLOAD_CONSTANTS } from "@/schema/uploadSchema";
-import { logError } from "./logUtils";
+import { logError } from "@/utils/sys/log";
 
 /**
  * Browser compatibility and DOM manipulation utilities

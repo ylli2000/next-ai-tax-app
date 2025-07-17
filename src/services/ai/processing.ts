@@ -21,7 +21,7 @@ import {
 } from "@/schema/messageSchema";
 import { env } from "@/schema/envSchema";
 import { UploadStatus } from "@/schema/uploadSchema";
-import { logInfo, logError } from "./logUtils";
+import { logInfo, logError } from "@/utils/sys/log";
 
 /**
  * AI data processing utilities

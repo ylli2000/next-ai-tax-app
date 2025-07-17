@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { invoices, type Invoice } from "@/schema/invoiceTables";
 import { type UpdateInvoiceData } from "@/schema/invoiceQueries";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Updates invoice information

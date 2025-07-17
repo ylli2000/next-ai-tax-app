@@ -1,7 +1,7 @@
 import { eq, ilike, or } from "drizzle-orm";
 import { users, userProfiles } from "@/schema/userTables";
 import { type UserWithProfile } from "@/schema/userQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Searches users by name, email, or company name using fuzzy matching

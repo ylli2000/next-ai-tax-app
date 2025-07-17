@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { users, userProfiles } from "@/schema/userTables";
 import { type UserWithProfile } from "@/schema/userQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Retrieves a user by their unique ID along with their profile

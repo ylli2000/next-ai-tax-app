@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "validate-env": "dotenv -e .env -- tsx src/utils/envUtils.ts",
+    "validate-env": "dotenv -e .env -- tsx src/utils/sys/env.ts",
     "dev": "npm run validate-env && next dev",
     "build": "npm run validate-env && next build",
     "start": "next start",

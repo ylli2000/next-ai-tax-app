@@ -1,5 +1,20 @@
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
-import { logError, logInfo } from "./logUtils";
+import {
+    PDF_PROCESSING,
+    type PdfPageCountResult,
+    type PdfSingleFileResult,
+    type PdfMultipleFilesResult,
+    type PdfLongImageResult,
+    type PdfSinglePageOptions,
+    type PdfMultiPageOptions,
+    type PdfLongImageOptions,
+    type PdfSmartProcessingOptions,
+    validatePdfSinglePageOptions,
+    validatePdfMultiPageOptions,
+    validatePdfLongImageOptions,
+    validatePdfSmartProcessingOptions,
+} from "@/schema/pdfSchema";
+import { logError, logInfo } from "@/utils/sys/log";
 /**
  * Client-side PDF processing utilities
  * Handles PDF to image conversion using PDF.js for browser compatibility
@@ -23,14 +38,17 @@ const initPdfJs = async () => {
             "pdfjs-dist"
         );
         if (typeof window !== "undefined") {
-            GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+            GlobalWorkerOptions.workerSrc = PDF_PROCESSING.PDF_JS_URL.replace(
+                "{version}",
+                version,
+            );
         }
 
         logInfo("PDF.js initialized successfully", { version });
         return { getDocument };
     } catch (error) {
         logError("Failed to initialize PDF.js", { error });
-        throw new Error("PDF processing not available");
+        throw new Error(ERROR_MESSAGES.PDF_PROCESSING_NOT_AVAILABLE);
     }
 };
 
@@ -54,16 +72,12 @@ export const supportsPdfProcessing = (): boolean => {
  */
 export const getPdfPageCount = async (
     pdfFile: File,
-): Promise<{
-    success: boolean;
-    pageCount?: number;
-    error?: string;
-}> => {
+): Promise<PdfPageCountResult> => {
     try {
         if (!supportsPdfProcessing()) {
             return {
                 success: false,
-                error: "PDF processing not supported in this browser",
+                error: ERROR_MESSAGES.PDF_PROCESSING_NOT_AVAILABLE,
             };
         }
 
@@ -98,35 +112,25 @@ export const getPdfPageCount = async (
  */
 export const convertPdfToImage = async (
     pdfFile: File,
-    options: {
-        pageNumber?: number; // 1-based page number, defaults to 1
-        scale?: number; // Rendering scale, defaults to 2.0 for high quality
-        outputFormat?: "image/jpeg" | "image/png"; // Output format, defaults to jpeg
-        quality?: number; // JPEG quality 0-1, defaults to 0.9
-        maxWidth?: number; // Maximum width in pixels, defaults to 1920
-        maxHeight?: number; // Maximum height in pixels, defaults to 1080
-    } = {},
-): Promise<{
-    success: boolean;
-    imageFile?: File;
-    error?: string;
-}> => {
+    options: Partial<PdfSinglePageOptions> = {},
+): Promise<PdfSingleFileResult> => {
     try {
         if (!supportsPdfProcessing()) {
             return {
                 success: false,
-                error: "PDF processing not supported in this browser",
+                error: ERROR_MESSAGES.PDF_PROCESSING_NOT_AVAILABLE,
             };
         }
 
+        const validatedOptions = validatePdfSinglePageOptions(options);
         const {
-            pageNumber = 1,
-            scale = 2.0,
-            outputFormat = "image/jpeg",
-            quality = 0.9,
-            maxWidth = 1920,
-            maxHeight = 1080,
-        } = options;
+            pageNumber,
+            scale,
+            outputFormat,
+            quality,
+            maxWidth,
+            maxHeight,
+        } = validatedOptions;
 
         const { getDocument } = await initPdfJs();
         const arrayBuffer = await pdfFile.arrayBuffer();
@@ -136,7 +140,10 @@ export const convertPdfToImage = async (
         if (pageNumber < 1 || pageNumber > pdf.numPages) {
             return {
                 success: false,
-                error: `Invalid page number. PDF has ${pdf.numPages} pages`,
+                error: ERROR_MESSAGES.PDF_PAGE_NUMBER_OUT_OF_RANGE.replace(
+                    "{wanted}",
+                    pageNumber.toString(),
+                ).replace("{max}", pdf.numPages.toString()),
             };
         }
 
@@ -164,7 +171,7 @@ export const convertPdfToImage = async (
         if (!context) {
             return {
                 success: false,
-                error: "Canvas 2D context not supported",
+                error: ERROR_MESSAGES.CANVAS_2D_CONTEXT_NOT_SUPPORTED,
             };
         }
 
@@ -195,7 +202,7 @@ export const convertPdfToImage = async (
 
         // Create File object from blob
         const originalName = pdfFile.name.replace(/\.pdf$/i, "");
-        const extension = outputFormat === "image/jpeg" ? ".jpg" : ".png";
+        const extension = outputFormat.split("/")[1]; //.jpg or .png
         const imageFileName = `${originalName}_page${pageNumber}${extension}`;
 
         const imageFile = new File([blob], imageFileName, {
@@ -235,22 +242,11 @@ export const convertPdfToImage = async (
  */
 export const convertPdfToImages = async (
     pdfFile: File,
-    options: {
-        maxPages?: number; // Maximum pages to convert, defaults to 10
-        scale?: number;
-        outputFormat?: "image/jpeg" | "image/png";
-        quality?: number;
-        maxWidth?: number;
-        maxHeight?: number;
-    } = {},
-): Promise<{
-    success: boolean;
-    imageFiles?: File[];
-    pageCount?: number;
-    error?: string;
-}> => {
+    options: Partial<PdfMultiPageOptions> = {},
+): Promise<PdfMultipleFilesResult> => {
     try {
-        const { maxPages = 10, ...convertOptions } = options;
+        const validatedOptions = validatePdfMultiPageOptions(options);
+        const { maxPages, ...convertOptions } = validatedOptions;
 
         // Get page count first
         const pageCountResult = await getPdfPageCount(pdfFile);
@@ -321,44 +317,28 @@ export const convertPdfToImages = async (
  */
 export const convertPdfToLongImage = async (
     pdfFile: File,
-    options: {
-        maxPages?: number; // Maximum pages to process, defaults to 3
-        scale?: number; // Rendering scale, defaults to 2.0
-        outputFormat?: "image/jpeg" | "image/png"; // Output format, defaults to jpeg
-        quality?: number; // JPEG quality 0-1, defaults to 0.9
-        maxWidth?: number; // Maximum width in pixels, defaults to 1920
-        pageSpacing?: number; // Spacing between pages in pixels, defaults to 20
-        addPageSeparator?: boolean; // Add visual separator between pages, defaults to true
-        separatorColor?: string; // Separator line color, defaults to #e0e0e0
-        separatorThickness?: number; // Separator line thickness, defaults to 2
-    } = {},
-): Promise<{
-    success: boolean;
-    imageFile?: File;
-    pageCount?: number;
-    totalHeight?: number;
-    processedPages?: number;
-    error?: string;
-}> => {
+    options: Partial<PdfLongImageOptions> = {},
+): Promise<PdfLongImageResult> => {
     try {
         if (!supportsPdfProcessing()) {
             return {
                 success: false,
-                error: "PDF processing not supported in this browser",
+                error: ERROR_MESSAGES.PDF_PROCESSING_NOT_AVAILABLE,
             };
         }
 
+        const validatedOptions = validatePdfLongImageOptions(options);
         const {
-            maxPages = 3,
-            scale = 2.0,
-            outputFormat = "image/jpeg",
-            quality = 0.9,
-            maxWidth = 1920,
-            pageSpacing = 20,
-            addPageSeparator = true,
-            separatorColor = "#e0e0e0",
-            separatorThickness = 2,
-        } = options;
+            maxPages,
+            scale,
+            outputFormat,
+            quality,
+            maxWidth,
+            pageSpacing,
+            addPageSeparator,
+            separatorColor,
+            separatorThickness,
+        } = validatedOptions;
 
         // Get PDF document and page count
         const { getDocument } = await initPdfJs();
@@ -371,7 +351,7 @@ export const convertPdfToLongImage = async (
         if (pagesToProcess === 0) {
             return {
                 success: false,
-                error: "PDF has no pages to process",
+                error: ERROR_MESSAGES.PDF_HAS_NO_PAGES_TO_PROCESS,
             };
         }
 
@@ -576,31 +556,11 @@ export const shouldProcessAsPdf = (file: File): boolean =>
  */
 export const smartPdfProcessing = async (
     pdfFile: File,
-    options: {
-        maxPages?: number; // Max pages for long-image mode (defaults to 3)
-        scale?: number;
-        outputFormat?: "image/jpeg" | "image/png";
-        quality?: number;
-        maxWidth?: number;
-        maxHeight?: number;
-        // Long image specific options
-        pageSpacing?: number;
-        addPageSeparator?: boolean;
-        separatorColor?: string;
-        separatorThickness?: number;
-    } = {},
-): Promise<{
-    success: boolean;
-    imageFile?: File;
-    pageCount?: number;
-    selectedPage?: number;
-    totalHeight?: number;
-    processedPages?: number;
-    strategy?: string;
-    error?: string;
-}> => {
+    options: Partial<PdfSmartProcessingOptions> = {},
+): Promise<PdfSingleFileResult> => {
     try {
-        const { maxPages = 3, ...convertOptions } = options;
+        const validatedOptions = validatePdfSmartProcessingOptions(options);
+        const { maxPages, ...convertOptions } = validatedOptions;
 
         // Get page count
         const pageCountResult = await getPdfPageCount(pdfFile);

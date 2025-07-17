@@ -5,11 +5,12 @@ import {
     ApiRequestOmitFields,
     ApiResponse,
     blobSchema,
+    defaultApiError,
     defaultApiResponse,
     mapHttpError,
 } from "@/schema/apiSchema";
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
-import { logError, logInfo } from "@/utils/logUtils";
+import { logError, logInfo } from "@/utils/sys/log";
 
 /**
  * API utility functions for handling HTTP requests
@@ -78,7 +79,7 @@ export const fetchWithRetry = async <S extends z.ZodTypeAny>(
                 } catch {
                     // If schema parsing fails, return as error
                     return {
-                        ...defaultApiResponse(),
+                        ...defaultApiError(),
                         error: "INVALID_RESPONSE_FORMAT" as keyof typeof ERROR_MESSAGES,
                         message:
                             textData || ERROR_MESSAGES.INVALID_RESPONSE_FORMAT,
@@ -103,7 +104,7 @@ export const fetchWithRetry = async <S extends z.ZodTypeAny>(
                 });
 
                 return {
-                    ...defaultApiResponse(),
+                    ...defaultApiError(),
                     error: code,
                     message,
                     statusCode: response.status,
@@ -114,7 +115,6 @@ export const fetchWithRetry = async <S extends z.ZodTypeAny>(
                 ...defaultApiResponse(),
                 success: true,
                 data,
-                statusCode: response.status,
             };
         } catch (error) {
             lastError = error as Error;

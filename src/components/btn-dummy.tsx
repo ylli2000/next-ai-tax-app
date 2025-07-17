@@ -1,7 +1,7 @@
 "use client";
 
 import type { Session } from "next-auth";
-import { logInfo } from "@/utils/logUtils";
+import { logInfo } from "@/utils/sys/log";
 
 type SessionLogButtonProps = {
     session: Session;

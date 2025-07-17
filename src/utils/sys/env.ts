@@ -1,5 +1,5 @@
 import { type Env, envSchema, processEnv } from "@/schema/envSchema";
-import { logError, logInfo } from "@/utils/logUtils";
+import { logError, logInfo } from "./log";
 
 /**
  * Validate environment variables against the schema

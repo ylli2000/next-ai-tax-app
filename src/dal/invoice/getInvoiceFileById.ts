@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { invoiceFiles, type InvoiceFile } from "@/schema/invoiceTables";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Retrieves an invoice file by its unique ID

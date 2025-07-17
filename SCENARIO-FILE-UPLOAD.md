@@ -34,7 +34,7 @@
 
 #### 2. **前端验证阶段**
 ```typescript
-// 使用 fileUtils.ts 进行批量文件验证
+// 使用 utils/core/file.ts 进行批量文件验证
 const { valid: validFiles, invalid: invalidFiles } = validateFiles(files);
 
 // 验证内容：
@@ -53,7 +53,7 @@ if (invalidFiles.length > 0) {
 #### 3. **客户端PDF处理阶段（新增长图支持）**
 ```typescript
 // 使用 pdfProcessingUtils.ts 智能处理PDF文件
-import { smartPdfProcessing } from '@/utils/pdfProcessingUtils';
+import { smartPdfProcessing } from '@/services/file/pdf';
 
 for (const file of validFiles) {
     if (file.type === 'application/pdf') {
@@ -62,7 +62,7 @@ for (const file of validFiles) {
         
         // 智能PDF处理 - 自动选择最佳策略（已简化，移除mode参数）
         const result = await smartPdfProcessing(file, {
-            maxPages: UPLOAD_CONSTANTS.MAX_READ_PDF_PAGES, // 默认3页，可配置
+            maxPages: PDF_PROCESSING.MAX_READ_PDF_PAGES, // 默认3页，可配置
             scale: 2.0,            // 高清渲染
             outputFormat: 'image/jpeg',
             quality: 0.9,          // 高质量输出
@@ -95,7 +95,7 @@ for (const file of validFiles) {
 #### 4. **客户端图像压缩阶段（智能缩放）**
 ```typescript
 // 使用 clientUploadUtils.ts 智能压缩图像（内置缩放逻辑）
-import { compressImageWithStandardInterface } from '@/utils/imageProcessingUtils';
+import { compressImageWithStandardInterface } from '@/services/file/image';
 
 // 状态：PROCESSING_PDF/NOT_UPLOADED → COMPRESSING_IMAGE
 onProgressUpdate('COMPRESSING_IMAGE', 25);
@@ -110,8 +110,8 @@ const targetSizeBytes = isLongImage
     : UPLOAD_CONSTANTS.TARGET_COMPRESSED_FILE_SIZE_IN_BYTES;             // 单页 = 1MB
 
 const maxHeight = isLongImage
-    ? UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT * pageCount  // 例：3页 = 3240px
-    : UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT;             // 单页 = 1080px
+    ? IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT * pageCount  // 例：3页 = 3240px
+    : IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT;             // 单页 = 1080px
 
 const compressed = await compressImageWithStandardInterface(file, {
     targetSizeBytes,            // 智能缩放目标大小
@@ -142,7 +142,7 @@ if (compressed.success && compressed.compressedFile) {
 #### 5. **S3直接上传阶段**
 ```typescript
 // 使用 clientUploadUtils.ts 完整客户端上传流程
-import { handleFileUpload } from '@/utils/clientUploadUtils';
+import { handleFileUpload } from '@/services/upload/client';
 
 const result = await handleFileUpload(
     file,
@@ -208,7 +208,7 @@ const progressMapping = {
     FAILED: 0
 };
 
-// 智能进度计算（uploadStatusUtils.ts）
+// 智能进度计算（services/upload/status.ts）
 export const getProgressForStatus = (
     status: UploadStatus,
     stageProgress: number = 0
@@ -239,7 +239,7 @@ export const getProgressForStatus = (
 
 #### 并行上传体验
 ```typescript
-// 多文件并行上传显示（bulkUploadUtils.ts）
+// 多文件并行上传显示（services/upload/bulk.ts）
 const batchProgress = calculateOverallProgress(progresses);
 
 // 显示整体进度
@@ -297,7 +297,7 @@ console.log(`失败: ${batchProgress.failedCount}`);
 #### 1. **用户请求文件访问**
 ```typescript
 // 使用 serverUploadUtils.ts 的文件访问功能
-import { getFileAccessUrl } from '@/utils/serverUploadUtils';
+import { getFileAccessUrl } from '@/services/upload/server';
 
 const accessFile = async (fileId: string, action: 'view' | 'download') => {
     // 1. 从数据库获取文件的S3对象键
@@ -321,7 +321,7 @@ const accessFile = async (fileId: string, action: 'view' | 'download') => {
 #### 2. **后端权限验证和URL生成**
 ```typescript
 // 使用 awsUtils.ts 生成预签名下载URL
-import { generatePresignedDownloadUrl } from '@/utils/awsUtils';
+import { generatePresignedDownloadUrl } from '@/services/storage/aws';
 
 export const getFileAccessUrl = async (
     s3ObjectKey: string,
@@ -386,25 +386,25 @@ export const getFileAccessUrl = async (
 #### 核心架构文件
 - [x] **uploadSchema.ts**: 新6状态枚举定义，移除双存储复杂性
 - [x] **messageSchema.ts**: PDF处理和图像压缩相关消息
-- [x] **uploadStatusUtils.ts**: 6状态检查函数和智能进度计算
+- [x] **services/upload/status.ts**: 6状态检查函数和智能进度计算
 
 #### 客户端处理工具
-- [x] **pdfProcessingUtils.ts**: PDF转图像客户端处理（新增长图支持）
+- [x] **services/file/pdf.ts**: PDF转图像客户端处理（新增长图支持）
   - `convertPdfToImage()`: 单页PDF转换
   - `convertPdfToImages()`: 多页PDF转多图
   - `convertPdfToLongImage()`: 多页PDF垂直拼接长图（新功能）
   - `smartPdfProcessing()`: 智能选择最佳处理策略
-- [x] **imageProcessingUtils.ts**: 智能图像压缩工具（已存在）
-- [x] **clientUploadUtils.ts**: 完整客户端上传协调器（支持长图模式）
-- [x] **bulkUploadUtils.ts**: 前端多文件并行上传工具
+- [x] **services/file/image.ts**: 智能图像压缩工具（已存在）
+- [x] **services/upload/client.ts**: 完整客户端上传协调器（支持长图模式）
+- [x] **services/upload/bulk.ts**: 前端多文件并行上传工具
 
 #### 服务端支持
-- [x] **serverUploadUtils.ts**: 服务端上传处理API函数
+- [x] **services/upload/server.ts**: 服务端上传处理API函数
   - `handleRequestUploadUrl()`: 生成S3预签名上传URL
   - `handleProcessWithAI()`: OpenAI Vision直接处理S3图像
   - `getFileAccessUrl()`: 安全文件访问URL生成
-- [x] **aiProcessUtil.ts**: 重写为使用S3 URL的OpenAI Vision处理
-- [x] **awsUtils.ts**: S3操作工具（预签名URL、文件检查等）
+- [x] **services/ai/processing.ts**: 重写为使用S3 URL的OpenAI Vision处理
+- [x] **services/storage/aws.ts**: S3操作工具（预签名URL、文件检查等）
 
 #### 已移除的过时代码
 - [x] **aiUploadUtil.ts**: 删除OpenAI Files相关代码（已不需要）

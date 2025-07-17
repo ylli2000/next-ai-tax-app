@@ -1,5 +1,5 @@
 import { API_PATHS } from "@/schema/apiSchema";
-import { buildUrl } from "./routeUtils";
+import { buildUrl } from "@/utils/core/route";
 
 /**
  * ApiEndpoints - Client-side API call encapsulation with URL building

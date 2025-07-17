@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { users, userProfiles } from "@/schema/userTables";
 import { type UserRole } from "@/schema/userSchema";
 import { type UserWithProfile } from "@/schema/userQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Retrieves all users with a specific role

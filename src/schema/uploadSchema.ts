@@ -1,15 +1,8 @@
 import { z } from "zod";
 import { ERROR_MESSAGES } from "./messageSchema";
-
-/**
- * Upload schemas using Zod for runtime validation and type inference
- * Handles pure file upload functionality only
- */
+import { PdfMimeTypeEnum, PdfExtensionEnum } from "./pdfSchema";
 
 // File type categorization
-export const PdfMimeTypeEnum = ["application/pdf"] as const;
-export const pdfMimeTypeSchema = z.enum(PdfMimeTypeEnum);
-export type PdfMimeType = z.infer<typeof pdfMimeTypeSchema>;
 
 export const ImageMimeTypeEnum = [
     "image/jpeg",
@@ -33,10 +26,6 @@ export const ImageExtensionEnum = [
 export const imageExtensionSchema = z.enum(ImageExtensionEnum);
 export type ImageExtension = z.infer<typeof imageExtensionSchema>;
 
-export const PdfExtensionEnum = [".pdf"] as const;
-export const pdfExtensionSchema = z.enum(PdfExtensionEnum);
-export type PdfExtension = z.infer<typeof pdfExtensionSchema>;
-
 // File type enums
 export const AllowedMimeTypeEnum = [
     ...ImageMimeTypeEnum,
@@ -54,13 +43,13 @@ export type AllowedExtension = z.infer<typeof allowedExtensionSchema>;
 
 // File upload progress status - New simplified 6-state workflow
 export const UploadStatusEnum = [
-    "NOT_UPLOADED", // 初始状态：等待开始上传
-    "PROCESSING_PDF", // 客户端PDF转图像处理中
-    "COMPRESSING_IMAGE", // 客户端图像压缩中
-    "UPLOADING_TO_S3", // 上传图像到S3存储
-    "AI_PROCESSING", // OpenAI Vision分析S3图像
-    "COMPLETED", // 全流程完成
-    "FAILED", // 失败状态
+    "NOT_UPLOADED", // Initial state: waiting to start upload
+    "PROCESSING_PDF", // Client-side PDF to image conversion in progress
+    "COMPRESSING_IMAGE", // Client-side image compression in progress
+    "UPLOADING_TO_S3", // Uploading image to S3 storage
+    "AI_PROCESSING", // OpenAI Vision analyzing S3 image
+    "COMPLETED", // Complete workflow finished
+    "FAILED", // Failed state
 ] as const;
 export const uploadStatusSchema = z.enum(UploadStatusEnum);
 export type UploadStatus = z.infer<typeof uploadStatusSchema>;
@@ -115,6 +104,17 @@ export const FILE_SIZE_CONSTANTS = {
     BYTES_PER_GB: 1024 * 1024 * 1024, // Used in formatUtils.ts for large file display
 } as const;
 
+// Image compression defaults for uploadUtils.ts
+export const IMAGE_COMPRESSION = {
+    DEFAULT_MAX_WIDTH: 1920, // Used in uploadUtils.ts for image compression width limit
+    DEFAULT_MAX_HEIGHT: 1080, // Used in uploadUtils.ts for image compression height limit
+    DEFAULT_QUALITY: 0.8, // Used in uploadUtils.ts for image compression quality
+    QUALITY_REDUCTION_FACTOR: 0.8, // Used in uploadUtils.ts for image compression quality reduction factor
+    DEFAULT_OUTPUT_FORMAT: "image/jpeg" as ImageMimeType, // Used in uploadUtils.ts for image compression output format
+} as const;
+
+// PDF processing constants moved to pdfSchema.ts
+
 // File Upload Constants - referencing schema enums for consistency
 export const UPLOAD_CONSTANTS = {
     DEFAULT_UPLOAD_STATUS: "NOT_UPLOADED" as UploadStatus, // Used in UI initialization
@@ -134,18 +134,9 @@ export const UPLOAD_CONSTANTS = {
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB - Used in uploadUtils.ts for file size validation
     TARGET_COMPRESSED_FILE_SIZE_IN_BYTES: 1 * 1024 * 1024, // 1MB - Used in uploadUtils.ts for file size validation
 
-    // PDF processing limits
-    MAX_READ_PDF_PAGES: 3, // Maximum pages to read from PDF for long image creation
     // Filename length limit
     MAX_FILENAME_LENGTH: FILE_SIZE_CONSTANTS.MAX_FILENAME_LENGTH, // Used in uploadUtils.ts for filename validation
 
-    // Image compression defaults for uploadUtils.ts
-    IMAGE_COMPRESSION: {
-        DEFAULT_MAX_WIDTH: 1920, // Used in uploadUtils.ts for image compression width limit
-        DEFAULT_MAX_HEIGHT: 1080, // Used in uploadUtils.ts for image compression height limit
-        DEFAULT_QUALITY: 0.8, // Used in uploadUtils.ts for image compression quality
-        DEFAULT_OUTPUT_FORMAT: "image/jpeg" as ImageMimeType, // Used in uploadUtils.ts for image compression output format
-    },
     // Filename safety for uploadUtils.ts
     UNSAFE_FILENAME_CHARS: /[<>:"/\\|?*]/g, // Used in uploadUtils.ts for filename sanitization
 

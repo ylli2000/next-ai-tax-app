@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { invoices, invoiceFiles } from "@/schema/invoiceTables";
 import { type InvoiceStatus } from "@/schema/invoiceSchema";
 import { type InvoiceWithFile } from "@/schema/invoiceQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Retrieves all invoices with a specific status

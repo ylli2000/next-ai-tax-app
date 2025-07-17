@@ -2,7 +2,7 @@ import { eq, ilike, or } from "drizzle-orm";
 import { invoices, invoiceFiles } from "@/schema/invoiceTables";
 import { type InvoiceWithFile } from "@/schema/invoiceQueries";
 import { INVOICE_CONSTANTS } from "@/schema/invoiceSchema";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Searches invoices by supplier name, invoice number, or description

@@ -30,6 +30,7 @@ export type AIValidationErrorCode = z.infer<typeof AIValidationErrorCodeSchema>;
 
 // Success messages
 export const SUCCESS_MESSAGES = {
+    SUCCESS: "Success",
     EMAIL_SENT: "Email sent successfully!",
     INVOICE_UPLOADED: "Invoice uploaded and processed successfully!",
     INVOICE_UPDATED: "Invoice updated successfully!",
@@ -68,6 +69,13 @@ export const ERROR_MESSAGES = {
     UPLOAD_FAILED:
         "Upload failed. Please check your internet connection and try again",
 
+    // PDF processing errors
+    PDF_PROCESSING_NOT_AVAILABLE:
+        "PDF processing is not available in this browser",
+    PDF_HAS_NO_PAGES_TO_PROCESS:
+        "PDF has no pages to process. Please check if the file is valid",
+    PDF_PAGE_NUMBER_OUT_OF_RANGE:
+        "Invalid page number {wanted}. PDF has {max} pages",
     // AI processing errors
     AI_PROCESSING_FAILED:
         "We couldn't read your invoice automatically. Please check if the image is clear and try again",
@@ -175,6 +183,7 @@ export const ERROR_MESSAGES = {
     FILE_UPLOAD_ABORTED: "File upload aborted",
     FAILED_TO_COMPRESS_IMAGE: "Failed to compress image",
     FAILED_TO_LOAD_IMAGE: "Failed to load image",
+    CANVAS_2D_CONTEXT_NOT_SUPPORTED: "Canvas 2D context not supported",
 
     // AWS S3 Storage errors
     AWS_CONFIGURATION_ERROR:

@@ -2,7 +2,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import { db } from "@/dal/db";
+import { db } from "@/lib/database";
 import { AUTH_CONSTANTS, SESSION_STRATEGY } from "@/schema/authSchema";
 import { env } from "@/schema/envSchema";
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
@@ -14,8 +14,8 @@ import {
     users,
     verificationTokens,
 } from "@/schema/userTables";
-import { getDefaultUserProfile } from "@/utils/authUtils";
-import { logError, logInfo } from "@/utils/logUtils";
+import { getDefaultUserProfile } from "@/utils/core/auth";
+import { logError, logInfo } from "@/utils/sys/log";
 import { UserRole } from "@/schema/userSchema";
 
 export const { auth, signIn, signOut, handlers } = NextAuth({

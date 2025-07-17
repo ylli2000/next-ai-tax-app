@@ -136,12 +136,10 @@
 - [x] **增强错误处理**: 客户端处理失败恢复、网络中断重试 ✅ *PDF转换、压缩、上传各阶段错误处理*
 
 ### 🗃️ 2.3 数据访问层 (/dal)
-- [ ] **userDal.ts**: 用户数据访问层 *引用 @/schema/userSchema 和 @/schema/userTables*
-- [ ] **invoiceDal.ts**: 发票数据访问层 *引用 @/schema/invoiceSchema 和 @/schema/invoiceTables*
-- [ ] **categoryDal.ts**: 分类数据访问层 *引用 @/schema/invoiceSchema*
-- [ ] **fileDal.ts**: 文件数据访问层 *引用 @/schema/uploadSchema*
-- [ ] **statisticsDal.ts**: 统计数据访问层 *引用 @/schema/financialSchema 和相关Schema*
-- [ ] **确保所有DAL函数只能通过API访问**
+- [x] **user/ 目录**: 用户数据访问层，包含createUser, getUserById, updateUser等 ✅ *引用 @/schema/userSchema 和 @/schema/userTables*
+- [x] **invoice/ 目录**: 发票数据访问层，包含createInvoice, listInvoices, updateInvoice等 ✅ *引用 @/schema/invoiceSchema 和 @/schema/invoiceTables*  
+- [x] **analytics/ 目录**: 统计数据访问层，包含getCategoryStats, getInvoiceStats等 ✅ *引用 @/schema/financialSchema 和相关Schema*
+- [x] **确保所有DAL函数只能通过API访问** ✅
 
 > 💡 **Schema导入规范**: DAL层应从对应的schema文件导入类型定义，如：
 > - `import { User, UserRole } from '@/schema/userSchema'`
@@ -325,24 +323,14 @@
 - [x] **性能全面提升** ✅ *并行处理、直接上传、智能压缩，整体性能提升2-3倍*
 - [x] **开发体验改善** ✅ *清晰的状态流转、统一的错误处理、完整的进度反馈*
 
-### 📦 文件组织
-```
-数据模型都在 /schema/*Tables.ts
-类型和数据模型定义,都在 /schema/*Schema.ts
-工具函数都在 /utils 目录
-例子:
-src/
-├── app/                # Next.js App Router页面
-├── components/         # 可重用组件
-│   └── ui/             # Shadcn UI组件
-├── utils/              # 工具函数
-├── dal/                # 数据访问层
-├── schema/             # 类型和数据模型定义
-├── actions/            # Server Actions
-├── hooks/              # 自定义Hooks
-└── stores/             # Zustand状态管理
-└── lib/                # 认证和用户管理
-```
+### 📦 项目结构
+详细的项目文件组织结构请参考：**[STRUCT.md](./STRUCT.md)**
+
+该文档包含：
+- 完整的目录结构说明
+- 每个文件的用途和依赖关系  
+- 架构原则和导入模式
+- 文件命名规范
 
 ---
 

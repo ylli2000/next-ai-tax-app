@@ -12,42 +12,42 @@ import {
     isCompressingImage,
     isUploadingToS3,
     isAIProcessing,
-} from "./uploadStatusUtils";
-import { formatFileSize } from "./formatUtils";
-import { validateFiles } from "./fileUtils";
+} from "@/services/upload/status";
+import { formatFileSize } from "@/utils/core/format";
+import { validateFiles } from "@/utils/core/file";
 
 /**
- * 前端多文件上传工具函数
+ * Frontend multi-file upload utility functions
  *
- * ⚠️ 重要说明：
- * 这些工具函数用于前端多文件上传界面的显示和管理。
- * 实际的上传流程：每个文件都是独立的单文件上传，使用 clientUploadUtils.ts 的新工作流。
+ * ⚠️ Important Note:
+ * These utility functions are used for frontend multi-file upload interface display and management.
+ * Actual upload process: Each file is an independent single-file upload using the new workflow from clientUploadUtils.ts.
  *
- * 前端"批量上传" = 多个独立的单文件上传并行执行
- * - 每个文件有独立的上传状态和进度（6状态枚举）
- * - 每个文件直接上传到S3（无需OpenAI Files中转）
- * - 失败的文件不影响其他文件
- * - 前端组件负责协调多个并行上传的显示
+ * Frontend "bulk upload" = Multiple independent single-file uploads executed in parallel
+ * - Each file has independent upload status and progress (6 status enums)
+ * - Each file uploads directly to S3 (no OpenAI Files transfer needed)
+ * - Failed files do not affect other files
+ * - Frontend components coordinate the display of multiple parallel uploads
  *
- * 新工作流程：
- * 1. 用户选择多个文件
- * 2. 前端使用这些工具函数验证和组织文件
- * 3. 前端并行执行多个独立的单文件上传（每个都调用 clientUploadUtils 工作流）
- * 4. 前端使用这些工具函数汇总和显示整体进度
+ * New workflow:
+ * 1. User selects multiple files
+ * 2. Frontend uses these utility functions to validate and organize files
+ * 3. Frontend executes multiple independent single-file uploads in parallel (each calls clientUploadUtils workflow)
+ * 4. Frontend uses these utility functions to aggregate and display overall progress
  */
 
-// ===== 前端文件组织工具 =====
+// ===== Frontend File Organization Tools =====
 
 /**
- * 前端工具：计算多个文件的总大小
- * 用于前端显示总上传大小和估算时间
+ * Frontend tool: Calculate total size of multiple files
+ * Used for frontend display of total upload size and time estimation
  */
 export const calculateTotalSize = (files: File[]): number =>
     files.reduce((total, file) => total + file.size, 0);
 
 /**
- * 前端工具：文件排序
- * 用于前端文件列表的排序显示
+ * Frontend tool: File sorting
+ * Used for sorting display of frontend file list
  */
 export const sortFiles = (
     files: File[],
@@ -79,8 +79,8 @@ export const sortFiles = (
 };
 
 /**
- * 前端工具：按类型分组文件
- * 用于前端按文件类型分类显示
+ * Frontend tool: Group files by type
+ * Used for categorized display by file type on frontend
  */
 export const groupFilesByType = (files: File[]): Record<string, File[]> => {
     const groups: Record<string, File[]> = {};
@@ -96,13 +96,13 @@ export const groupFilesByType = (files: File[]): Record<string, File[]> => {
     return groups;
 };
 
-// ===== 前端批量上传准备工具 =====
+// ===== Frontend Bulk Upload Preparation Tools =====
 
 /**
- * 前端工具：准备多文件上传
+ * Frontend tool: Prepare multi-file upload
  *
- * 注意：这只是前端的文件验证和统计，实际上传时每个文件都是独立的单文件上传流程
- * 使用 clientUploadUtils.ts 的 handleFileUpload 函数进行完整的客户端协调上传
+ * Note: This is only frontend file validation and statistics, actual upload uses independent single-file upload process for each file
+ * Uses handleFileUpload function from clientUploadUtils.ts for complete client-side coordinated upload
  */
 export const prepareBulkUpload = (
     files: File[],
@@ -122,8 +122,8 @@ export const prepareBulkUpload = (
     const { valid: validFiles, invalid: invalidFiles } = validateFiles(files);
     const totalSize = calculateTotalSize(validFiles);
 
-    // 估算上传时间（基于平均上传速度的粗略计算）
-    // 注意：实际时间取决于网络状况和每个文件的独立上传进度
+    // Estimate upload time (rough calculation based on average upload speed)
+    // Note: Actual time depends on network conditions and independent upload progress of each file
     const estimatedTimeMinutes = Math.ceil(
         totalSize /
             (UPLOAD_CONSTANTS.AVERAGE_UPLOAD_SPEED_BYTES_PER_SECOND * 60),
@@ -144,11 +144,11 @@ export const prepareBulkUpload = (
     };
 };
 
-// ===== 前端进度管理工具 =====
+// ===== Frontend Progress Management Tools =====
 
 /**
- * 前端工具：创建单个文件的上传进度对象
- * 用于前端初始化每个文件的上传状态
+ * Frontend tool: Create upload progress object for single file
+ * Used for frontend initialization of each file's upload status
  */
 export const createUploadProgress = (fileId: string): UploadProgress => ({
     id: fileId,
@@ -158,12 +158,12 @@ export const createUploadProgress = (fileId: string): UploadProgress => ({
 });
 
 /**
- * 前端工具：计算多文件上传的整体进度
+ * Frontend tool: Calculate overall progress of multi-file upload
  *
- * 基于多个独立的单文件上传进度计算整体进度
- * 每个文件都有自己的上传状态，这个函数用于前端显示整体进度条
+ * Calculates overall progress based on multiple independent single-file upload progresses
+ * Each file has its own upload status, this function is used for frontend overall progress bar display
  *
- * 使用 uploadStatusUtils.ts 的状态检查函数确保一致性
+ * Uses status check functions from uploadStatusUtils.ts to ensure consistency
  */
 export const calculateOverallProgress = (
     progresses: UploadProgress[],

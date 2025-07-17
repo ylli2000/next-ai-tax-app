@@ -1,5 +1,5 @@
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
-import { UPLOAD_CONSTANTS } from "@/schema/uploadSchema";
+import { IMAGE_COMPRESSION, UPLOAD_CONSTANTS } from "@/schema/uploadSchema";
 
 /**
  * Image processing and compression utilities
@@ -152,10 +152,10 @@ export const compressImage = async (
     } = {},
 ): Promise<CompressionResult> => {
     const {
-        maxWidth = UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_WIDTH,
-        maxHeight = UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT,
-        quality = UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_QUALITY,
-        outputFormat = UPLOAD_CONSTANTS.IMAGE_COMPRESSION.DEFAULT_OUTPUT_FORMAT,
+        maxWidth = IMAGE_COMPRESSION.DEFAULT_MAX_WIDTH,
+        maxHeight = IMAGE_COMPRESSION.DEFAULT_MAX_HEIGHT,
+        quality = IMAGE_COMPRESSION.DEFAULT_QUALITY,
+        outputFormat = IMAGE_COMPRESSION.DEFAULT_OUTPUT_FORMAT,
         maxAttempts = 5,
     } = options;
 
@@ -167,9 +167,10 @@ export const compressImage = async (
         const performCompression = () => {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-
             if (!ctx) {
-                reject(new Error("Canvas 2D context not supported"));
+                reject(
+                    new Error(ERROR_MESSAGES.CANVAS_2D_CONTEXT_NOT_SUPPORTED),
+                );
                 return;
             }
 
@@ -191,7 +192,6 @@ export const compressImage = async (
 
             // Draw and compress
             ctx.drawImage(img, 0, 0, width, height);
-
             canvas.toBlob(
                 (blob) => {
                     if (!blob) {
@@ -200,9 +200,7 @@ export const compressImage = async (
                         );
                         return;
                     }
-
                     currentAttempt++;
-
                     // Check if target size is met or max attempts reached
                     if (
                         !options.targetSizeBytes ||
@@ -223,12 +221,15 @@ export const compressImage = async (
                             attempts: currentAttempt,
                             finalQuality: currentQuality,
                         };
-
-                        resolve(result);
+                        resolve(result); //final result
                     } else {
                         // Progressive compression: reduce quality and retry
-                        currentQuality = Math.max(0.1, currentQuality * 0.8);
-                        performCompression();
+                        currentQuality = Math.max(
+                            0.1,
+                            currentQuality *
+                                IMAGE_COMPRESSION.QUALITY_REDUCTION_FACTOR,
+                        );
+                        performCompression(); //keep looping
                     }
                 },
                 outputFormat,
@@ -289,7 +290,7 @@ export const compressImageWithStandardInterface = async (
             error:
                 error instanceof Error
                     ? error.message
-                    : "Image compression failed",
+                    : ERROR_MESSAGES.FAILED_TO_COMPRESS_IMAGE,
         };
     }
 };

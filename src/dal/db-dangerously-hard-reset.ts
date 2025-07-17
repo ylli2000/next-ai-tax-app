@@ -4,8 +4,8 @@
 import { config } from "dotenv";
 config();
 import { neon } from "@neondatabase/serverless";
-import { logError, logInfo, logWarn } from "@/utils/logUtils";
-import { env } from "@/utils/envUtils";
+import { logError, logInfo, logWarn } from "@/utils/sys/log";
+import { env } from "@/utils/sys/env";
 
 /**
  * Hard reset the database - DROP ALL TABLES and recreate from scratch

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { invoiceFiles } from "@/schema/invoiceTables";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Deletes an invoice file record from the database

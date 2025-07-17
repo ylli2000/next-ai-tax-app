@@ -1,6 +1,6 @@
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
 import { UPLOAD_CONSTANTS } from "@/schema/uploadSchema";
-import { formatFileSize } from "./formatUtils";
+import { formatFileSize } from "@/utils/core/format";
 
 /**
  * File utility functions

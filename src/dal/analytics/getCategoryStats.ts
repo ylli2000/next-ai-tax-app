@@ -9,7 +9,7 @@ import {
     type EnrichedCategoryStats,
     type CategoryStatsData,
 } from "@/schema/invoiceQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 // Internal helper type for calculating totals
 type CategoryTotals = {

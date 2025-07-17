@@ -3,8 +3,8 @@ import {
     type CreateInvoiceData,
     insertInvoiceSchema,
 } from "@/schema/invoiceQueries";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Creates a new invoice record in the database

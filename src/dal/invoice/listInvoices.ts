@@ -5,7 +5,7 @@ import {
     type InvoiceListSort,
     type InvoiceListResult,
 } from "@/schema/invoiceQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Lists invoices with pagination, filtering, and sorting capabilities
@@ -42,14 +42,10 @@ export const listInvoices = async (
         whereConditions.push(lte(invoices.invoiceDate, filters.dateTo));
     }
     if (filters.amountMin) {
-        whereConditions.push(
-            gte(invoices.totalAmount, filters.amountMin.toString()),
-        );
+        whereConditions.push(gte(invoices.totalAmount, filters.amountMin));
     }
     if (filters.amountMax) {
-        whereConditions.push(
-            lte(invoices.totalAmount, filters.amountMax.toString()),
-        );
+        whereConditions.push(lte(invoices.totalAmount, filters.amountMax));
     }
     if (filters.description) {
         whereConditions.push(

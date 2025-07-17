@@ -1,7 +1,7 @@
 import { count, desc, sum } from "drizzle-orm";
 import { invoices } from "@/schema/invoiceTables";
 import { type InvoiceStats } from "@/schema/invoiceQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Generates comprehensive invoice statistics and analytics

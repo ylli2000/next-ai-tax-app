@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { userProfiles, type UserProfile } from "@/schema/userTables";
 import { type UpdateUserProfileData } from "@/schema/userQueries";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Updates user profile information (company name, notification preferences)

@@ -1,14 +1,14 @@
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
 import { ExtractedInvoiceData } from "@/schema/aiSchema";
 import { createInvoiceFile } from "@/dal/invoice/createInvoiceFile";
-import { logError, logInfo } from "./logUtils";
-import { processWithOpenAIVision } from "./aiProcessingUtil";
+import { logError, logInfo } from "@/utils/sys/log";
+import { processWithOpenAIVision } from "@/services/ai/processing";
 import {
     generateS3ObjectKey,
     generatePresignedUploadUrl,
     generatePresignedDownloadUrl,
     checkS3FileExists,
-} from "./awsUtils";
+} from "@/services/storage/aws";
 
 /**
  * Server-side upload processing utilities

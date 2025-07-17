@@ -1,7 +1,7 @@
 import { count } from "drizzle-orm";
 import { users } from "@/schema/userTables";
 import { type UserRole } from "@/schema/userSchema";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Gets the distribution count of users by role

@@ -15,7 +15,7 @@ import {
     type UserListSort,
     type UserListResult,
 } from "@/schema/userQueries";
-import { db } from "../db";
+import { db } from "@/lib/database";
 
 /**
  * Lists users with pagination, filtering, and sorting capabilities

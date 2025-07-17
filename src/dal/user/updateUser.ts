@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { users, type User } from "@/schema/userTables";
 import { type UpdateUserData } from "@/schema/userQueries";
-import { logInfo } from "@/utils/logUtils";
-import { db } from "../db";
+import { logInfo } from "@/utils/sys/log";
+import { db } from "@/lib/database";
 
 /**
  * Updates user basic information (name, role)

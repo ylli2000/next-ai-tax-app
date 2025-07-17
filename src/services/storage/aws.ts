@@ -1,7 +1,7 @@
 import { Readable } from "stream";
 import { env } from "@/schema/envSchema";
 import { ERROR_MESSAGES } from "@/schema/messageSchema";
-import { logError, logInfo } from "./logUtils";
+import { logError, logInfo } from "@/utils/sys/log";
 
 /**
  * AWS S3 Storage Utilities
